@@ -12,5 +12,8 @@
     "bbs",
     "ansi",
     "terminals"
-  ]
+  ],
+  "dependencies": {
+    "iconv-lite": "^0.6.2"
+  }
 }
