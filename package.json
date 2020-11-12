@@ -1,0 +1,10 @@
+{
+  "name": "ansi-bbs-utils",
+  "version": "0.1.0",
+  "description": "Utilities and helpers for ANSI-BBS and compatible terminals.",
+  "main": "index.js",
+  "repository": "git@github.com:NuSkooler/ansi-bbs-utils.git",
+  "author": "Bryan Ashby <bryan@l33t.codes>",
+  "license": "BSD-2-Clause",
+  "private": false
+}
