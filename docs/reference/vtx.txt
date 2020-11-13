@@ -1,0 +1,557 @@
+VTX Client / Server
+Draft : 10-SEP-2017
+
+Layout
+======
+
+    Page contains zero or more rows of text. Top most 1.
+    Row contains zero or more columns of characters. Left most 1.
+    Characters have individual attributes selected using Set Graphics Rendition (CSI m)
+    Rows have individual attributes selected using CSI [, CSI ], and ESC #.
+    Rows with default size are 80 characters wide.
+    Rows can contain more characters than the width of the row. Characters past the right column are not displayed.
+    Rows with other sizes are smaller or larger but can not guantee true size.
+    If the cursor is at the width of a row, after the next printed character, the cursor will move to the start of tne next row.
+
+
+Code Definitions
+================
+
+    NUL     = 0x00
+    SOH     = 0x01  - used for YModem
+    STX     = 0x02  - used for YModem
+    ETX     = 0x03
+    EOT     = 0x04
+    ENQ     = 0x05
+    ACK     = 0x06  - used for YModem
+    BEL     = 0x07  - bell
+    BS      = 0x08  - backspace
+    HT      = 0x09  - horizontal tab
+    LF      = 0x0A  - linefeed
+    VT      = 0x0B
+    FF      = 0x0C
+    CR      = 0x0D  - carriage return
+    SO      = 0x0E
+    SI      = 0x0F
+    DLE     = 0x10
+    DC1     = 0x11
+    XON     = 0x11
+    DC2     = 0x12
+    DC3     = 0x13
+    XOFF    = 0x13
+    DC4     = 0x14
+    NAK     = 0x15  - used for YModem
+    SYN     = 0x16
+    ETB     = 0x17
+    CAN     = 0x18  - used for YModem
+    EM      = 0x19
+    SUB     = 0x1A
+    CPMEOF  = 0x1A  - used for YModem
+    ESC     = 0x1B  - escape
+    FS      = 0x1C
+    GS      = 0x1D
+    RS      = 0x1E
+    US      = 0x1F
+    SPACE   = 0x20
+    DEL     = 0x7F
+    CSI     = 0x1B 0x5B - control sequence introducer
+    
+
+Sequences (# : to be implemented)
+=================================
+
+    STANDARD ANSI (VTX Extensions marked with #)
+    ============================================
+
+    CSI n '@' : Insert Character (ICH). Moves text from current posion right n characters. {1}
+
+    CSI n 'A' : Cursor Up (CUU). Move cursor up n rows. Stops at top of page. {1}
+
+    CSI n 'B' : Cursor Down (CUD). Move cursor down n rows. {1}
+
+    CSI n 'C' : Cursor Forward (CUF). Move cursor n columns right. Stops at right of page. {1}
+
+    CSI f [ ; n ] SPACE 'D' : Font Selection (FNT). 
+        f = font number (0=primary, 1=high intensity,2=blink,3=high and blink,4..9:alternates).
+        n = font: Since the character fonts to be listed here were never established by ECMA, cterm font numbers are used.
+
+            0  - Codepage 437 English
+            1  - Codepage 1251 Cyrillic, (swiss)
+            2  - Russian koi8-r
+            3  - ISO-8859-2 Central European
+            4  - ISO-8859-4 Baltic wide (VGA 9bit mapped)
+            5  - Codepage 866 (c) Russian
+            6  - ISO-8859-9 Turkish
+            7  - haik8 codepage (use only with armscii8 screenmap)
+            8  - ISO-8859-8 Hebrew
+            9  - Ukrainian font koi8-u
+            10 - ISO-8859-15 West European, (thin)
+            11 - ISO-8859-4 Baltic (VGA 9bit mapped)
+            12 - Russian koi8-r (b)
+            13 - ISO-8859-4 Baltic wide
+            14 - ISO-8859-5 Cyrillic
+            15 - ARMSCII-8 Character set
+            16 - ISO-8859-15 West European
+            17 - Codepage 850 Multilingual Latin I, (thin)
+            18 - Codepage 850 Multilingual Latin I
+            19 - Codepage 885 Norwegian, (thin)
+            20 - Codepage 1251 Cyrillic
+            21 - ISO-8859-7 Greek
+            22 - Russian koi8-r (c)
+            23 - ISO-8859-4 Baltic
+            24 - ISO-8859-1 West European
+            25 - Codepage 866 Russian
+            26 - Codepage 437 English, (thin)
+            27 - Codepage 866 (b) Russian
+            28 - Codepage 885 Norwegian
+            29 - Ukrainian font cp866u
+            30 - ISO-8859-1 West European, (thin)
+            31 - Codepage 1131 Belarusian, (swiss)
+            32 - Commodore 64 (UPPER)
+            33 - Commodore 64 (Lower)
+            34 - Commodore 128 (UPPER)
+            35 - Commodore 128 (Lower)
+            36 - Atari
+            37 - P0T NOoDLE (Amiga) 
+            38 - mO'sOul (Amiga)    
+            39 - MicroKnight Plus (Amiga)
+            40 - Topaz Plus (Amiga)      
+            41 - MicroKnight (Amiga)
+            42 - Topaz (Amiga)      
+            100 - TI-99/4
+            101 - Teletext
+
+    CSI n 'D' : Cursor Backwards (CUB). Move cursor n columns left. Stops at left of page. {1}
+
+    CSI n 'E' : Cursor Next Line (CNL). Move cursor n rows down, column 1. {1}
+
+    CSI n 'F' : Cursor Previous Line (CPL). Move cursor n rows up, column 1. Stops at top of page. {1}
+
+    CSI n 'G' : Cursor Horizontal position Absolute (CHA). Move cursor to column n of current row. {1}
+
+    CSI r ; c 'H' : Cursor Position (CP). Move cursor to row r, column c. {1,1}
+
+    CSI n 'I' : Cursor Horizontal Tabulation (CHT). Move cursor forward n tab stops. Stops at last tab stop. {1}
+
+    CSI n 'J' : Erase in Display (ED). {0}
+        n = 0 : Erase from cursor position to end-of-page.
+        n = 1 : Erase from start-of-page to cursor position.
+        n = 2 : Erase entire page. (BBS/ANSI.SYS modes also move position to 1,1).
+
+    CSI n 'K' : Erase in Line (EL). {0}
+        n = 0 : Erase from cursor position to end-of-row.
+        n = 1 : Erase from start-of-row to cursor position.
+        n = 2 : Erase entire row.
+
+    CSI n 'L' : Insert Lines (IL). Insert n rows at current row. {1}
+
+    CSI n 'M' : Delete Lines (DL). Delete n rows at current row. {1}
+
+    CSI n 'P' : Delete Character (DCH). Delete n characters at cursor position. {1}
+
+    CSI n 'S' : Scroll Up (SU). Scroll up.
+
+    CSI n 'T' : Scroll Down (SD). Scroll down.
+
+    CSI n 'X' : Erase Character (ECH). Erase next n characters {1}
+
+    CSI n 'Z' : Cursor Back Tab (CBT). Move cursor backwards n tab stops. Stops at left of page {1}
+
+    CSI n 'b' : Repeat last printed character n times. {1}
+
+    CSI n 'c' : Device Attributes. 
+        If n = 0, VTX client will respond CSI '?50;86;84;88c'. {0}
+
+    CSI r ; c 'f' : Horizontal and Vertical Position. Same as CUP. {1,1}
+
+    CSI n 'h' : Set Mode (SM).
+        n = '?50' : turns on VTX ANSI mode. #
+            '?6' : 1,1=ul of scrolling region
+            '?7' : auto wrap on
+            '?12' : cursor blink on
+            '?25' : cursor on
+            '?31' : bold uses font 1
+            '?32' : bold disabled
+            '?33' : blink = bright background
+            '?34' : blink uses font 2
+            '?35' : blink disabled
+            '=255' : DOORWAY mode on.
+
+    CSI n 'l' : Reset Mode (RM).
+        n = '?50' : turns off VTX ANSI mode. #
+            '?51' : Teletext burst mode - ESC to return to ANSI mode.
+                render 7-bit codes once in mode to teletext display output.
+            '?6' : 1,1=ul of scrolling region
+            '?7' : auto wrap off
+            '?12' : cursor blink off
+            '?25' : cursor hide
+            '?31' : bold uses font 0
+            '?32' : bold enabled
+            '?33' : blink = bright background off
+            '?34' : blink uses font 0
+            '?35' : blink enabled
+            '=255' : DOORWAY mode off.
+        
+    CSI n [ ; ... ] 'm' : Set Graphics Rendition (SGR). zero or more of: {0}
+        0 : Reset all to default.
+        1 : Bold on in 'real' ANSI mode, high intensity foreground color in BBS/ANSI.SYS mode.
+        2 : Faint on
+        3 : Italics on.
+        4 : Underline on.
+        5 : Blink slow on.
+        6 : Blink fast on.
+        7 : Reverse foreground and background colors.
+        8 : Concealed on.
+        9 : Strikethrough on.
+        10 : Select default font.
+        11 : Select high intensity font.
+        12 : Select blink font.
+        13 : Select high/blink font.
+        14-19: Select alternate font.
+        21 : Bold off in 'real' ANSI mode, regular intensity foreground color in BBS/ANSI.SYS mode.
+        22 : Faint off
+        23 : Italics off.
+        24 : Underline off.
+        25 : Blink off.
+        27 : Normal foreground and background colors.
+        28 : Concealed off.
+        29 : Strikethrough off.
+        30 : Black foreground color.
+        31 : Red foreground color.
+        32 : Green foreground color.
+        33 : Yellow (brown) foreground color.
+        34 : Blue foreground color.
+        35 : Magenta foreground color.
+        36 : Cyan foreground color.
+        37 : White (gray) foreground color.
+        38;2;r;g;b : Set foreground color 24 bit (0-255).
+        38;5;n : Set foreground color from palette (0-255). {0}
+        39 : Reset foreground color to default.
+        40 : Black background color.
+        41 : Red background color.
+        42 : Green background color.
+        43 : Yellow (brown) background color.
+        44 : Blue background color.
+        45 : Magenta background color.
+        46 : Cyan background color.
+        47 : White (gray) background color.
+        48;2;r;g;b : Set background color 24 bit (0-255).
+        48;5;n : Set background color from palette (0-255). {0}
+        49 : Reset background color to default.
+        50 : n/a
+        56 : Doublestrike on. #
+        57 : Shadow on. #
+        58 : top half on.
+        59 : bottom half on.
+        70 : n/a
+        76 : Doublestrike off. #
+        77 : Shadow off. #
+        78 : top half off - revert to normal
+        79 : bottom half off - revert to normal
+        80 : Select Teletext Block Mosaic font. (use 10 to return to default) #
+        81 : Select Teletext Separated Block Mosaic font. (use 10 to return to default) #
+        82-85: resered for future intrinsic fonts. (use 10 to return to default) #
+        90 : High intensity black foreground color.
+        91 : High intensity red foreground color.
+        92 : High intensity green foreground color.
+        93 : High intensity yellow foreground color.
+        94 : High intensity blue foreground color.
+        95 : High intensity magenta foreground color.
+        96 : High intensity cyan foreground color.
+        97 : High intensity white foreground color.
+        100 : High intensity black background color.
+        101 : High intensity red background color.
+        102 : High intensity green background color.
+        103 : High intensity yellow background color.
+        104 : High intensity blue background color.
+        105 : High intensity magenta background color.
+        106 : High intensity cyan background color.
+        107 : High intensity white background color.
+
+    CSI n 'n' : Device Status Report. {0}
+        n = 5 : Replies with CSI 0 n.
+            6 : Request cursor position. Reply is CSI r ';' c 'R'.
+          255 : Replay with CSI r ';' c 'R' with console size.
+
+    CSI p1 ; p2 '*r' : Baud rate emulation.
+        p1 : nil,0,1 = host transmit, 2=host recieve, 3=printer, 4=modem hi, 5=modem lo
+        p2 : nil,0=unlimited, 1=300, 2=600, 3=1200, 4=2400, 5=4800, 6=9600, 7=19200, 8=38400, 9=57600, 10=76800, 11=115200
+
+    CSI t ; b 'r' : Set scroll window (DECSTBM).
+        t = top row number
+        b = bottom row number
+
+    CSI s : Save cursor position.
+    
+    CSI n ; r ; g ; b 't' : Set 24bit color. n: 0=background, 1=foreground. r/g/b: 0-255.
+    
+    CSI u : Restore cursor position.
+
+    ESC '7' : Save crsr pos and attrs
+    ESC '8' : Restore crsr pos and attrs
+    ESC 'D' : - Scroll up 1 row
+    ESC 'E' : - Move to next row
+    ESC 'M' : - Scroll down 1 row
+    ESC 'c' : - Reset terminal. (modes, default attributes to default).
+    
+    ESC '#' n : Set Row Attributes.
+        n=  0 : Reset all row attributes (size and background.) #
+            1 : single wide / double high - top half (as with BBC Micro) #
+            2 : single wide / double high - bottom half (as with BBC Micro) #
+            3 : double wide / double high - top half
+            4 : double wide / double high - bottom half
+            5 : single wide / single high
+            6 : double wide / single high
+            = : Row Marquee off #
+            < : Row Marquee on #
+
+
+    VTX MEDIA COMMANDS  CSI _
+    SPRITE COMMANDS CSI 0 ... _
+    ===========================
+
+    CSI 0 ; 0 ; n ; t ; data '_' : define sprite object
+        n = number; 1-64 {1}
+        t = type:   0 = url : unicode encoded characters 
+                    1 = UTF8 url : hex3 encoded
+                    2 = raw UTF8 svg : hex3 encoded
+                    3 = raw UTF8 svg deflated : hex3 encoded
+                    4 = raw UTF8 svg Base64: hex3 encoded (https://github.com/nodeca/pako/tree/master/dist)
+        data;       (0) ascii;ascii... or hexstring where 0-9=0-9,A-F=:-? (0x30-0x3F)
+    CSI 0 ; 0 ; n '_' : clear sprite object n
+    CSI 0 ; 0 '_' : clear all sprite objects.
+
+    CSI 0 ; 1 ; s ; n ; w ; h ; z '_' : Display sprite. Sprites are defined using APC codes (see below).
+        s : Sprite number to assign to this sprite. (1-64) {1}
+        n : Sprite definition number. (1-64) {1}
+        w : Width of sprite (in character cell widths). {1}
+        h : Height of sprite (in character cell heights). {1}
+        z : Z-plane. 0 = below text plane, 1 : above text plane. {0}
+    CSI 0 ; 1 ; s '_' : Remove sprite s from display.
+    CSI 0 ; 1 '_' : Remove all sprites from display.
+
+    CSI 0 ; 2 ; s ; r ; c ; t '_' : Move sprite s to new r, c.
+        s : Sprite number. (1-64) {0}
+        r : new row (1-n)
+        c : new column (1-cols)
+        t : time in milliseconds for move to happen. (default=0 / instant)
+        
+    CSI 0 ; 3 ; s ; z '_' : Move sprite s to new z-plane.
+        s : Sprite number. (1-64) {0}
+        z : Z-plane. 0 = below text plane, 1 : above text plane. {0}
+
+    AUDIO COMMANDS CSI 1 ... _
+    ==========================
+        
+    CSI 1 ; 0 ; n ; t ; hex3 '_' : define audio object
+        n = audio number; 1-64
+        t = type:   0 = url : unicode encoded characters 
+                    1 = UTF8 url : hex3 encoded
+                    2 = raw UTF8 mp3 : hex3 encoded
+                    3 = raw UTF8 mp3 deflated : hex3 encoded
+                    4 = raw UTF8 mp3 Base64: hex3 encoded (https://github.com/nodeca/pako/tree/master/dist)
+        data;       (0) ascii;ascii... or hexstring where 0-9=0-9,A-F=:-? (0x30-0x3F)
+    CSI 1 ; 0 ; n '_' : clear audio object n
+    CSI 1 ; 0 '_' : clear all audio objects.
+
+    CSI 1 ; 1 ; n '_' : select audio object.
+        n = audio number; 1-64
+    
+    CSI 1 ; 2 ; p '_' : play / pause / stop / rewind
+        p : 0 = stop & rewind
+            1 = play
+            2 = pause
+    
+    CSI 1 ; 3 ; v '_' : set volume (0-100)
+
+    HOTSPOT COMMANDS CSI \
+    =========================
+
+    CSI t ; w ; h ; l ; a [ ; ... ; a ] \ : Define clickable region on screen at cursor
+            position of size w(idth) and h(eight). values a1 .. upto the _ are
+            ascii codes for what the hot spot will send if clicked. The terminal
+            can optionally mouseover highlight this region if l is 1.
+        t : type. 0=string, 1=url
+        w : width in default text size columns. {1}
+        h : height in default text size rows. {1}
+        l : highlight? 0=no, 1=yes. {0}
+        a : unicode ascii value of character in string to send.
+
+    CSI t \ : clear all hotspots.
+    CSI \ : clear all hotspots.
+
+    MISC ATTRIBUTE SETTINGS CSI ^
+    =============================
+    
+    CSI '0' ; c '^' : Set cursor color. c = (0-255) {7}
+    CSI '0^' : Reset cursor color to default.
+    CSI '1' ; s '^' : Set cursor size. s = (0:none, 1:thin, 2:thick, 3:block) {2}
+    CSI '1^' : Reset cursor size to default.
+    CSI '2' ; o '^' : Set cursor orientation. o = (0:horizontal, 1:vertical) {0}
+    CSI '2^' : reset cursor orientation to default.
+    CSI '3' ; c '^' : Set page border color.  c = (0-255) {0}
+    CSI '3^' : Reset page border color to default.
+    CSI '4' ; c '^' : Set page background color. c = (0-255) {0}
+    CSI '5^' : Set hotspot mouseover colors from current character attributes.
+    CSI '6^' : Set hotspot click colors from current character attributes.. 
+
+    ROW SIZE COMMAND CSI [
+    =============================
+    
+    CSI w '[' : Set Row Size. Alter the geometry of the current row. See also ESC # commands for sizing.
+        w : width scale. 0=50%, 1=100%, 2=150%, 3=200%. {1}
+
+    ROW ATTRIBUTE SETTINGS CSI ]
+    ============================
+        
+    CSI s ; c1 ; c2 ']' : Set Row Background. (in BBS/ANSI.SYS mode, color 0 is true black, so
+        text on a colored background appears as text on black, not the row background.)
+        s : Style. 0=none, 1=solid color 1, 2=horizontal gradient, 3=vertical gradient. {0}
+        c1 : Color 1 (0-255) {0}
+        c2 : Color 2 (0-255) {0}
+
+        
+   
+
+Keyboard Mapping
+================
+
+    These are the codes sent to the server from a VTX client terminal. *
+    * Keys not listed are normally reserved by operating systems and web browsers for special
+    function.
+
+    Normal keys send single ASCII value.
+
+    Special Key     Sent Code
+    --------------- --------------------
+    Backspace       '\x08'
+    Tab             '\x09'
+    Enter           '\x0D'
+    Escape          '\x1B'
+    Space           ' '
+    Shift Space     '\xA0'
+    PageUp          CSI 'V'
+    PageDn          CSI 'U'
+    End             CSI 'K'
+    Home            CSI 'H'
+    Left            CSI 'D'
+    Up              CSI 'A'
+    Right           CSI 'C'
+    Down            CSI 'B'
+    Insert          CSI '@'
+    Delete          '\x7F'
+    Control A       '\x01'
+    Control B       '\x02'
+    Control D       '\x04'
+    Control E       '\x05'
+    Control F       '\x06'
+    Control G       '\x07'
+    Control H       '\x08'
+    Control I       '\x09'
+    Control J       '\x0A'
+    Control K       '\x0B'
+    Control L       '\x0C'
+    Control M       '\x0D'
+    Control O       '\x0F'
+    Control P       '\x10'
+    Control Q       '\x11'
+    Control R       '\x12'
+    Control S       '\x13'
+    Control U       '\x15'
+    Control X       '\x18'
+    Control Y       '\x19'
+    Control Z       '\x1A'
+    F1              ESC 'OP'
+    F2              ESC 'OQ'
+    F3              ESC 'OR'
+    F4              ESC 'OS'
+    F5              ESC 'Ot'
+    F6              CSI '17~'
+    F7              CSI '18~'
+    F8              CSI '19~'
+    F9              CSI '20~'
+    F10             CSI '21~'
+    F11             CSI '23~'
+    F12             CSI '24~'
+
+    PETSCII terminal type keys:
+
+    Key             CBM Equivalent
+    --------------- -------------------------
+    Backspace       BACK/DEL
+    Del             BACK/DEL
+    ESC             RUN/STOP
+    END             Text Mode
+    Shift END       Graphics Mode
+    HOME            HOME
+    Shift HOME      CLR
+    Arrows          Arrows
+    Ctrl 1          Black
+    Ctrl 2          White
+    Ctrl 3          Red
+    Ctrl 4          Cyan
+    Ctrl 5          Purple
+    Ctrl 6          Green
+    Ctrl 7          Blue
+    Ctrl 8          Yellow
+    Ctrl 9          Reverse Off
+    Ctrl 0          Reverse On
+    Alt 1           Orange
+    Alt 2           Brown
+    Alt 3           Lt Red
+    Alt 4           Dk Gray
+    Alt 5           Gray
+    Alt 6           Lt Green
+    Alt 7           Lt Blue
+    Alt 8           Lt Gray
+    F1-F8           F1-F8
+    Tab             Toggle Text / Graphics mode
+    
+    ATASCII terminal type keys:
+    
+    Key             Atari Equivalent
+    --------------- -------------------------
+    ESC             Escape
+    Arrows          Cursor move
+    Shift HOME      Clear Screen 
+    Backspace       Backspace
+    Tab             Tab
+    SHIFT Tab       Set Tabstop
+    CTRL Tab        Clear Tabstop
+    Return          End Line
+    SHIFT DEL       Delete row
+    SHIFT INS       Insert Row
+    CTRL 2          Bell
+    DEL             Delete
+    INS             Insert
+    
+    
+Colors
+======
+
+    ANSI Colors
+    
+    See https://en.wikipedia.org/wiki/ANSI_escape_code for reference.
+    
+      0             Black
+      1             Red
+      2             Green
+      3             Brown
+      4             Blue
+      5             Magenta
+      6             Cyan
+      7             Lt Gray
+      8             Dk Gray
+      9             Lt Red
+     10             Lt Green
+     11             Yellow
+     12             Lt Blue
+     13             Lt Magenta
+     14             Lt Cyan
+     15             White
+
+     16 - 231       6 x 6 x 6 colors.
+    232 - 255       Grays.
+
+    PETSCII colors are same as system referenced to by the CodePages
+    VIC20, C64, or C128

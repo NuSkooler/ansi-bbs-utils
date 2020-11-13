@@ -11,6 +11,7 @@ Some, but not all of the standards at least partially dealt with here:
 * [ANSI-BBS](http://ansi-bbs.org/)
 * [cterm](docs/reference/cterm.txt)
 * [bansi](docs/reference/bansi.txt)
+* [vtx](docs/reference/vtx.txt)
 
 ## License
 See [LICENSE](LICENSE)
