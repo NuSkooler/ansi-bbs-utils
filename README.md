@@ -13,5 +13,51 @@ Some, but not all of the standards at least partially dealt with here:
 * [bansi](docs/reference/bansi.txt)
 * [vtx](docs/reference/vtx.txt)
 
+## Usage
+### Basic
+```
+const { Terminal } = require('ansi-bbs-utils');
+
+const term = new Terminal(socket);
+term.setTerminalType('ansi-bbs');
+term.fgColor('green').write('Hello, world!');
+```
+
+### Standards
+```
+term.ed(2)
+    .cuu().up()
+    .down(2)
+    .back().forward()
+    .left().right();
+```
+
+### Colors
+```
+//  nearest match colors
+term.setTerminalType('xterm-truecolor');
+term.rgb(255, 0, 215);  //  produces 24-bit seq
+term.setTerminalType('xterm-256');
+term.rgb(255, 0, 215);  //  produces 8-bit/256 near match = 200
+term.setTerminalType('ansi-bbs');
+term.rgb(255, 0, 215);  //  produces nearest 16c color
+
+//  selection
+term.red()              //  definitely red
+    .fgColor(9)         //  red
+    .fgColor(128, 0, 0) //  red
+    .fgRGB(128, 0, 0)   //  alias to fgColor
+    .fgColor(160)       //  "Red3"
+    .sgr('red')         //  red
+    .sgr(31)            //  ...still red.
+    .redBG();           //  OK fine, the background. But red.
+```
+
+## Capabilities
+const twoFiftySix = term.getCapabilities().has('8bit-color');
+
+term.addCapability('vtx');  //  🔥
+##
+
 ## License
 See [LICENSE](LICENSE)
