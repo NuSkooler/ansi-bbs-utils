@@ -15,7 +15,7 @@ Some, but not all of the standards at least partially dealt with here:
 
 ## Usage
 ### Basic
-```
+```js
 const { Terminal } = require('ansi-bbs-utils');
 
 const term = new Terminal(socket);
@@ -24,7 +24,7 @@ term.fgColor('green').write('Hello, world!');
 ```
 
 ### Standards
-```
+```js
 term.ed(2)
     .cuu().up()
     .down(2)
@@ -33,7 +33,7 @@ term.ed(2)
 ```
 
 ### Colors
-```
+```js
 //  nearest match colors
 term.setTerminalType('xterm-truecolor');
 term.rgb(255, 0, 215);  //  produces 24-bit seq
@@ -54,9 +54,10 @@ term.red()              //  definitely red
 ```
 
 ## Capabilities
+```js
 const twoFiftySix = term.getCapabilities().has('8bit-color');
-
 term.addCapability('vtx');  //  🔥
+```
 ##
 
 ## License
