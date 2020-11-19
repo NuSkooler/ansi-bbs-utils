@@ -34,13 +34,16 @@ term.ed(2)
 
 ### Colors
 ```js
-//  nearest match colors
+//  true color when available
 term.setTerminalType('xterm-truecolor');
-term.rgb(255, 0, 215);  //  produces 24-bit seq
+term.fgRGB(255, 0, 215);  //  produces 24-bit seq
+
+//  ...nearest match colors otherwise
 term.setTerminalType('xterm-256');
-term.rgb(255, 0, 215);  //  produces 8-bit/256 near match = 200
+term.fgRGB(255, 0, 215);  //  produces 8-bit/256 near match = 200
+
 term.setTerminalType('ansi-bbs');
-term.rgb(255, 0, 215);  //  produces nearest 16c color
+term.fgRGB(255, 0, 215);  //  produces nearest 16c color
 
 //  selection
 term.red()              //  definitely red
