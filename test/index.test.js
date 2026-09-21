@@ -11,6 +11,8 @@ test('package exports', () => {
     assert.equal(typeof(pkg.Common.AsSequence), 'symbol');
     assert.equal(pkg.Common.CSI, '\u001b[');
     assert.equal(typeof(pkg.Common.wantAsSequence), 'function');
+    assert.equal(typeof(pkg.ReplyParser), 'function');
+    assert.equal(typeof(pkg.DeviceAttributes.parseDeviceAttributes), 'function');
 });
 
 test('wantAsSequence() only looks at the last argument', () => {
