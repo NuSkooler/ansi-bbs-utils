@@ -15,6 +15,9 @@ Some, but not all of the standards at least partially dealt with here:
 * [bansi](docs/reference/bansi.txt)
 * [vtx](docs/reference/vtx.txt)
 
+## Requirements
+Node.js 22 or later. The only runtime dependency is `iconv-lite`.
+
 ## Usage
 ### Basic
 ```js
@@ -41,7 +44,7 @@ term.setTerminalType('xterm-truecolor');
 term.fgRGB(255, 0, 215);  //  produces 24-bit seq
 
 //  ...nearest match colors otherwise
-term.setTerminalType('xterm-256');
+term.setTerminalType('xterm-256color');
 term.fgRGB(255, 0, 215);  //  produces 8-bit/256 near match = 200
 
 term.setTerminalType('ansi-bbs');
@@ -58,12 +61,32 @@ term.red()              //  definitely red
     .redBG();           //  OK fine, the background. But red.
 ```
 
+### Sequences without writing
+Every output method takes `AsSequence` as its last argument to return the
+escape sequence instead of writing it:
+
+```js
+const { Common: { AsSequence } } = require('ansi-bbs-utils');
+
+const seq = term.goto(1, 1, AsSequence) + term.fgColor('red', AsSequence);
+```
+
 ## Capabilities
 ```js
 const twoFiftySix = term.getCapabilities().has('8bit-color');
+term.hasCapability('24bit-color');
 term.addCapability('vtx');  //  🔥
 ```
-##
+
+Capabilities are per `Terminal` instance: adding one after probing a remote
+terminal never affects another connection of the same terminal type.
+
+## Development
+```sh
+npm install
+npm test                # node:test
+npm run test:coverage   # with a coverage report
+```
 
 ## License
 See [LICENSE](LICENSE)
