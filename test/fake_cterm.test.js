@@ -123,6 +123,28 @@ describe('cache', () => {
         fake.destroy();
     });
 
+    test('a flat (SyncTERM-style) listing prints basenames and directories as blank lines', async () => {
+        const { fake, term } = FakeCTerm.connect({ listing : 'flat', fragmentReplies : false });
+        const apcs = [];
+        term.on('apc', a => apcs.push(a.body));
+
+        term.cterm.storeFile('a.ogg', bytes);
+        term.cterm.storeFile('live/m.wav', Buffer.from('m'));
+        term.cterm.storeFile('live/deep/d.wav', Buffer.from('d'));
+        term.cterm.listFiles();
+        term.cterm.listFiles('live/*');
+        term.cterm.listFiles('nope/*');
+        await fake.settle();
+
+        assert.deepEqual(apcs, [
+            `SyncTERM:C;L\na.ogg\t${md5(bytes)}\n\t\n`,
+            `SyncTERM:C;L\nm.wav\t${md5(Buffer.from('m'))}\n\t\n`,
+            'SyncTERM:C;L\n',
+        ]);
+        term.destroy();
+        fake.destroy();
+    });
+
     test('a multi-megabyte upload is stored whole', async () => {
         const { fake, term } = FakeCTerm.connect();
         const big = Buffer.alloc(3 * 1024 * 1024, 7);

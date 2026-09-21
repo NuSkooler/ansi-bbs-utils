@@ -13,7 +13,9 @@
   ],
   "scripts": {
     "test": "node --test \"test/*.test.js\"",
-    "test:coverage": "node --test --experimental-test-coverage \"test/*.test.js\""
+    "test:coverage": "node --test --experimental-test-coverage \"test/*.test.js\"",
+    "live": "node tools/live_audio.js",
+    "live:samples": "node tools/make_test_audio.js"
   },
   "engines": {
     "node": ">=22"

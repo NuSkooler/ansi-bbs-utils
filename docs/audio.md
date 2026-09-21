@@ -91,8 +91,26 @@ audio.on('idle', ({ channel, handle, name }) => { /* hit finished */ });
 
 Whatever the client's libsndfile decodes. Ogg Vorbis and WAV are safe on every
 build (IcyTerm decodes Vorbis natively; Opus needs its optional libopus
-feature). MP3 needs libsndfile 1.1.0 or later on a SyncTERM build and is not
-listed for IcyTerm. Ask rather than assume: `formatSupported()`.
+feature). MP3 needs libsndfile 1.1.0 or later on a SyncTERM build. Ask rather
+than assume: `formatSupported()`.
+
+Answers seen live (2026-09-21):
+
+| Client | WAV | Vorbis | Opus | FLAC | MP3 |
+|---|---|---|---|---|---|
+| IcyTerm 0.8.4 | yes | yes | yes | yes | no |
+| SyncTERM master, CTerm 1.332 | yes | yes | yes | yes | yes |
+
+## Cache listings differ
+
+IcyTerm lists the whole cache recursively with names relative to the root
+(`live/music.wav`), and its glob is a single `*` matched against that name.
+SyncTERM's listing is a one-level `glob(3)` of `<cache>/<pattern>` that prints
+**basenames** only, and a subdirectory that matches prints as a blank name
+with no MD5. The session therefore lists the root once and, for a name it
+still does not know that lives in a subdirectory, lists `dir/*` and prefixes
+the basenames it gets back. Either way an asset is uploaded once per client,
+not once per session.
 
 Prefer small files. An upload rides the telnet session as base64 (about 1.37
 times the file size) and will crawl under SyncTERM's baud-rate emulation. The

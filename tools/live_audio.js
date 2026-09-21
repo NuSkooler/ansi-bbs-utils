@@ -205,7 +205,9 @@ async function session(socket, { onDone } = {}) {
 
     const say = (s) => {
         console.log(s);
-        term.write(`${s}\n`);
+        if (telnet.writable) {
+            term.write(`${s}\n`);
+        }
     };
 
     term.on('device attributes', da => console.log(`<- DA ${printable(da.raw)}  client=${da.client} version=${da.version}`));
@@ -236,12 +238,16 @@ async function session(socket, { onDone } = {}) {
         `client: ${da.client || 'unknown'}  version: ${da.version || '?'}  ctermVersion: ${da.ctermVersion || 'none'}` :
         'client: no device attributes reply within 1.5s');
 
+    if (!telnet.writable) {
+        return term;    //  a port scan or a protocol mismatch; nothing to do
+    }
+
     //  2. probe
     const probe = await term.probeAudio({ timeout : 2000 });
     say(`probe: backend=${probe.backend} files=${probe.files}`);
 
     const audio = term.audio;
-    audio.on('idle', e => say(`<< idle: channel ${e.channel} (${e.name || 'tone'})`));
+    audio.on('idle', e => say(`<< idle: channel ${e.channel} (${e.name || (e.handle ? 'tone' : 'no handle')})`));
 
     //  3. formats
     if ('cterm' === probe.backend && probe.files) {

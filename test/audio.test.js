@@ -168,11 +168,12 @@ describe('session', () => {
         assert.deepEqual(fake.apcs, [
             'SyncTERM:Q;libsndfile',
             'SyncTERM:C;L',
+            'SyncTERM:C;L;music/*',     //  unknown after the root listing: ask the directory
             `SyncTERM:C;S;music/lobby;${bytes.toString('base64')}`,
         ]);
 
         await audio.ensureAsset('music/lobby');
-        assert.equal(fake.apcs.length, 3, 'already there');
+        assert.equal(fake.apcs.length, 4, 'already there');
         done();
 
         //  a new session against the same client cache
@@ -184,6 +185,52 @@ describe('session', () => {
         await term.audio.ensureAsset({ name : 'music/lobby', bytes : other });
         assert.equal(fake.apcs.length, 3);
         assert.equal(fake.cache.get('music/lobby').md5, md5(other));
+        done();
+    });
+
+    test('upload-once against a SyncTERM-style flat listing', async () => {
+        const cache = new Map();
+
+        let { fake, term, done } = await probed({ cache, listing : 'flat' });
+        await term.audio.ensureAsset({ name : 'live/music', bytes });
+        await term.audio.ensureAsset({ name : 'intro', bytes : other });
+        assert.deepEqual(fake.apcs.filter(a => !a.startsWith('SyncTERM:C;S;')), [
+            'SyncTERM:Q;libsndfile',
+            'SyncTERM:C;L',             //  root: empty
+            'SyncTERM:C;L;live/*',      //  the subdirectory: empty too
+        ]);
+        assert.equal(fake.apcs.filter(a => a.startsWith('SyncTERM:C;S;')).length, 2);
+        done();
+
+        //  a new session: the root listing shows 'intro' and a blank
+        //  line for 'live/'; the subdirectory listing shows a basename
+        ({ fake, term, done } = await probed({ cache, listing : 'flat' }));
+        await term.audio.ensureAsset({ name : 'live/music', bytes });
+        await term.audio.ensureAsset({ name : 'intro', bytes : other });
+        assert.deepEqual(fake.apcs, [
+            'SyncTERM:Q;libsndfile',
+            'SyncTERM:C;L',
+            'SyncTERM:C;L;live/*',
+        ], 'listed, never re-uploaded');
+
+        await term.audio.ensureAsset({ name : 'live/music', bytes : other });
+        assert.equal(fake.apcs.filter(a => a.startsWith('SyncTERM:C;S;live/music;')).length, 1, 'changed bytes are re-sent');
+        done();
+    });
+
+    test('an idle report after a stop still names what stopped', async () => {
+        const { fake, term, done } = await probed();
+        const idle = [];
+        term.audio.on('idle', e => idle.push(e));
+
+        const h = await term.audio.play('music', { name : 'music/lobby', bytes }, { loop : true });
+        await fake.settle();
+        await h.stop({ fade : 100 });
+        await fake.settle();
+
+        assert.equal(idle.length, 1);
+        assert.equal(idle[0].handle, h);
+        assert.equal(idle[0].name, 'music/lobby');
         done();
     });
 

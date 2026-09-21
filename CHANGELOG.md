@@ -17,7 +17,10 @@ All notable changes to this project are documented here.
   client's cache listing (with MD5s) is consulted first. Operations are
   serialized and wait for the socket. The CTerm `Wait` verb is never sent.
   Terminals without audio get a null session that accepts everything and
-  plays nothing. See `docs/audio.md`.
+  plays nothing. See `docs/audio.md`. Verified live against IcyTerm 0.8.4 and
+  a SyncTERM master build (CTerm 1.332); the cache check lists the root and
+  then each needed subdirectory because SyncTERM's listing is a one-level
+  glob of basenames while IcyTerm's is recursive.
 - `handlers/cterm.js` now emits the CTerm cache, query and audio APCs
   (`storeFile`, `listFiles`, `queryLibsndfile`, `queryFormat`,
   `queryAudioState`, `audioLoad`, `audioLoadBlob`, `audioSynth`, `audioCopy`,
