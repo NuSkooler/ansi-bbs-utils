@@ -112,6 +112,33 @@ rather than turned into keystrokes. Options go in the constructor:
 `new Terminal(socket, { input: { captureCPR: true } })`. The parser is also
 available standalone as `ReplyParser` for hosts with their own terminal object.
 
+## Audio
+Real audio files (Ogg Vorbis, WAV, FLAC, ...) on terminals that support the
+CTerm/SyncTERM audio APC (SyncTERM master and IcyTerm 0.8.4+ at the time of
+writing). Needs the input side above so the terminal's answers get back.
+
+```js
+const { backend, files } = await term.probeAudio();   //  'cterm' | 'none'
+
+const audio = term.audio;                             //  a do-nothing session when backend is 'none'
+audio.asset({ name : 'music/lobby', path : '/srv/audio/lobby.ogg' });
+audio.asset({ name : 'sfx/hit', bytes : hitWav });
+
+const music = await audio.play('music', 'music/lobby', { loop : true, volume : 60 });
+await audio.play('sfx', 'sfx/hit', { pan : -30 });    //  effects rotate over their own channels
+await music.volume(30, { ramp : 1000 });
+await music.stop({ fade : 1000 });
+
+audio.on('idle', ({ channel, handle }) => {});        //  a channel finished
+await audio.formatSupported('ogg', 'vorbis');         //  true | false | undefined (cannot ask)
+```
+
+Assets are uploaded to the terminal's cache once per BBS, not once per
+session, and Ogg Vorbis is the safe default format. Full notes, including what
+the wire looks like and what to test on a real terminal, are in
+[docs/audio.md](docs/audio.md). `Testing.FakeCTerm` is a scripted terminal for
+your own tests.
+
 ## Development
 ```sh
 npm install

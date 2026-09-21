@@ -5,6 +5,32 @@ All notable changes to this project are documented here.
 ## Unreleased
 
 ### Added
+- **Audio.** `terminal.probeAudio()` asks a CTerm/SyncTERM-compatible terminal
+  for its audio support (the libsndfile feature query; any answer means the
+  audio APC exists, `1` means files decode) and sets `cterm-audio` /
+  `cterm-audio-files` on that terminal. `terminal.audio` is then an
+  `AudioSession`: register assets by bytes or path, `play('music' | 'sfx' | 2..15,
+  asset, { loop, volume, pan, fadeIn, fadeOut, crossfade })`, `playTone()`,
+  per-play handles with `volume(value, { ramp })` and `stop({ fade })`, an
+  `idle` event when a channel finishes, and `formatSupported(container, codec)`
+  answered by the terminal itself. Assets are uploaded once per BBS: the
+  client's cache listing (with MD5s) is consulted first. Operations are
+  serialized and wait for the socket. The CTerm `Wait` verb is never sent.
+  Terminals without audio get a null session that accepts everything and
+  plays nothing. See `docs/audio.md`.
+- `handlers/cterm.js` now emits the CTerm cache, query and audio APCs
+  (`storeFile`, `listFiles`, `queryLibsndfile`, `queryFormat`,
+  `queryAudioState`, `audioLoad`, `audioLoadBlob`, `audioSynth`, `audioCopy`,
+  `audioQueue`, `audioFlush`, `audioVolume`, `audioUpdate`), validating the
+  duration and volume grammars and cache names from the spec.
+- `Terminal.sendSequence(seq)`: write an escape sequence and resolve when the
+  socket has taken it.
+- `Testing.FakeCTerm`: a scripted CTerm-style terminal, shipped in the package
+  so consumers can drive integration tests without a real client. It answers
+  device attribute and feature queries, keeps a file cache with MD5s, plays
+  queued buffers on a timer and reports idle channels.
+- `Audio.Formats`: libsndfile container/codec ids as CTerm's format query
+  wants them, and CTerm revision comparison helpers.
 - **An input side.** `ReplyParser` (also exported) is a pre-filter for terminal
   *replies* in an inbound byte stream: it reassembles APC strings
   (`ESC _ … ESC \`) and private-prefix CSI replies (device attributes, CTerm
