@@ -81,6 +81,37 @@ term.addCapability('vtx');  //  🔥
 Capabilities are per `Terminal` instance: adding one after probing a remote
 terminal never affects another connection of the same terminal type.
 
+## Input: terminal replies
+When you ask a terminal something (device attributes, a CTerm feature query, a
+cache listing) the answer arrives mixed in with keystrokes. Feed every inbound
+chunk through the terminal and it separates the two: replies become events,
+everything else comes back as `input` for your own key handling, in order and
+with sequences kept whole across TCP fragments.
+
+```js
+socket.on('data', chunk => term.feed(chunk));
+
+term.on('input', bytes => keyParser.feed(bytes));      //  keystrokes etc.
+term.on('device attributes', da => {
+    //  also sets term.termClient / term.ctermVersion
+    console.log(da.client, da.ctermVersion);           //  'cterm', '1.332'
+});
+term.on('report', ({ prefix, params }) => {});         //  CSI = 7 ; 100 ; 1 n
+term.on('apc', ({ body }) => {});                      //  ESC _ ... ESC \
+term.on('reply error', ({ reason, dropped }) => {});   //  overflow | timeout | aborted | flushed
+
+term.ecma.cpr();  //  or any query; replies show up above
+```
+
+This is a pre-filter, not a key parser: it never interprets keyboard
+sequences. A lone `ESC` (or `ESC [` with digits) is held for at most
+`escapeTimeout` (50 ms) in case a reply follows in the next packet, then passed
+through. A reply in progress is bounded (`maxApcLength`, `maxCsiLength`) and
+timed (`replyTimeout`, 2 s); on either limit it is dropped with a `reply error`
+rather than turned into keystrokes. Options go in the constructor:
+`new Terminal(socket, { input: { captureCPR: true } })`. The parser is also
+available standalone as `ReplyParser` for hosts with their own terminal object.
+
 ## Development
 ```sh
 npm install

@@ -5,6 +5,25 @@ All notable changes to this project are documented here.
 ## Unreleased
 
 ### Added
+- **An input side.** `ReplyParser` (also exported) is a pre-filter for terminal
+  *replies* in an inbound byte stream: it reassembles APC strings
+  (`ESC _ … ESC \`) and private-prefix CSI replies (device attributes, CTerm
+  feature/state reports) across TCP fragments into events, and passes every
+  other byte through, in order, for the host's own key parser. It is not a key
+  parser. Held bytes are bounded in size and time: an ambiguous prefix (`ESC`,
+  `ESC [`, a plain CSI) is released as keystrokes after `escapeTimeout`
+  (50 ms); a reply in progress is dropped with a `reply error` after
+  `replyTimeout` (2 s) or on overflow, never leaked as keystrokes. A CPR can be
+  captured with `captureCPR`.
+- `Terminal` is now an `EventEmitter` with `feed(chunk)`, `flushInput()` and
+  `destroy()`; it re-emits parser events (`apc`, `report`, `cpr`,
+  `reply error`, and `input` for passthrough bytes) and, on a
+  `device attributes` reply, sets `termClient`, `clientVersion` and
+  `ctermVersion`. Construct with `new Terminal(socket, { input: { … } })` to
+  pass parser options.
+- `DeviceAttributes.parseDeviceAttributes()`: one home for mapping a DA reply
+  to a client (`cterm`, `icy_term`, `vtx`, `arctel`) and version, ported from
+  ENiGMA½ and Skull Crash.
 - A test suite (`npm test`, built on `node:test`, no test dependencies) covering
   terminal type normalization, the capability table, colour mapping, the
   ANSI-BBS / ECMA-48 / pipe-code / VTX / OSC 8 handlers and `Terminal` itself.
