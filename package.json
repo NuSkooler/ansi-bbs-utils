@@ -3,6 +3,20 @@
   "version": "0.1.0",
   "description": "Utilities for ANSI-BBS and compatible terminals.",
   "main": "index.js",
+  "files": [
+    "index.js",
+    "lib/",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "test:coverage": "node --test --experimental-test-coverage \"test/*.test.js\""
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "repository": "git@github.com:NuSkooler/ansi-bbs-utils.git",
   "author": "Bryan Ashby <bryan@l33t.codes>",
   "license": "BSD-2-Clause",
@@ -14,6 +28,6 @@
     "terminals"
   ],
   "dependencies": {
-    "iconv-lite": "^0.6.2"
+    "iconv-lite": "^0.7.3"
   }
 }
