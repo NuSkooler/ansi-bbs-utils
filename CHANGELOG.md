@@ -39,6 +39,21 @@ All notable changes to this project are documented here.
   the link text (VTX has no hyperlink sequence).
 - The `emca-48` capability name typo is now `ecma-48`.
 - The dead `rgb` cap handler mapping on `cterm` was removed.
+- `ansi-bbs-256color`, a capability entry in its own right, was reinterpreted
+  as `xterm-256color` by the `-256color` suffix rule (UTF-8, xterm caps).
+  An exact entry name now always wins over the heuristics.
+- Handler write paths (`fromPipeCodes()`, a handler's own `hyperlink()`)
+  bypassed the terminal's encoding, so CP437 art written that way went out
+  as UTF-8. They now encode for the terminal, without line feed conversion.
+- `rawWrite(data, cb)` never called `cb` when the socket was missing or not
+  writable, stranding sequential writers. It now reports an `Error`
+  asynchronously.
+- Generated sequence methods treated a trailing `false`/`undefined`
+  placeholder as a parameter (`goto(2, 3, false)` gave `ESC[2;3;falseH`).
+- VTX hex3 encoding produced the string `undefined` for characters above
+  U+00FF; it now encodes the UTF-8 bytes, as the VTX spec describes.
+- Palette indexes and RGB components are clamped to 0..255 instead of
+  emitting out-of-range values.
 
 ### Changed
 - `iconv-lite` bumped to `^0.7`.

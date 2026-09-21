@@ -60,6 +60,13 @@ describe('terminal type and capabilities', () => {
         ({ term } = makeTerminal('ansi-256color'));
         assert.ok(term.hasCapability('8bit-color'));
         assert.equal(term.getEncoding(), 'cp437');
+
+        //  the literal entry name, which also ends in -256color
+        ({ term } = makeTerminal('ansi-bbs-256color'));
+        assert.ok(term.hasCapability('8bit-color'));
+        assert.ok(!term.hasCapability('24bit-color'));
+        assert.ok(!term.hasCapability('xterm'));
+        assert.equal(term.getEncoding(), 'cp437');
     });
 
     test('unknown types fall back to ansi-bbs', () => {
@@ -179,6 +186,30 @@ describe('encoding and output', () => {
         assert.deepEqual(writes, []);
     });
 
+    test('a write that cannot happen still reports to its callback', (t, done) => {
+        const { term, socket } = makeTerminal('ansi');
+        socket.writable = false;
+
+        let sync = true;
+        term.rawWrite('x', err => {
+            assert.ok(err instanceof Error);
+            assert.ok(!sync, 'callback is asynchronous like a real socket write');
+            done();
+        });
+        sync = false;
+    });
+
+    test('handler write paths encode for the terminal without line feed conversion', () => {
+        //  U+2591 LIGHT SHADE is 0xB0 in CP437
+        let { term, writes } = makeTerminal('ansi');
+        term.fromPipeCodes('|04░\nx');
+        assert.equal(Buffer.from(writes.join(''), 'latin1').toString('hex'), '1b5b303b33316d' + 'b0' + '0a' + '78');
+
+        ({ term, writes } = makeTerminal('xterm'));
+        term.fromPipeCodes('░');
+        assert.equal(Buffer.from(writes.join(''), 'latin1').toString('hex'), 'e29691');
+    });
+
     test('cork()/uncork() reach the socket and chain', () => {
         const { term, socket } = makeTerminal('ansi');
 
@@ -285,6 +316,16 @@ describe('colors by capability', () => {
         const { term } = makeTerminal('xterm-truecolor');
         assert.equal(term.fgColor('1', '2', '3', AsSequence), `${CSI}38;2;1;2;3m`);
         assert.equal(term.fgColor('1', 'x', '3', AsSequence), '');
+    });
+
+    test('indexes and components are clamped to bytes', () => {
+        const { term } = makeTerminal('xterm-truecolor');
+        assert.equal(term.fgColor(300, AsSequence), `${CSI}38;5;255m`);
+        assert.equal(term.fgColor(-4, AsSequence), `${CSI}30m`);
+        assert.equal(term.fgRGB(999, -5, 2.9, AsSequence), `${CSI}38;2;255;0;2m`);
+
+        const ansi = makeTerminal('ansi').term;
+        assert.equal(ansi.fgColor(300, AsSequence), `${CSI}1m${CSI}37m`);
     });
 });
 

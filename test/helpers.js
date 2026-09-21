@@ -2,7 +2,7 @@
 
 const Terminal = require('../lib/terminal');
 
-const ESC = '';
+const ESC = '\u001b';
 const CSI = `${ESC}[`;
 
 //

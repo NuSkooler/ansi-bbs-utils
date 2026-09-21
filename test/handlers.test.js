@@ -35,6 +35,14 @@ describe('ansi_bbs', () => {
         assert.equal(term.ansi.eraseLine(2, AsSequence), `${CSI}2K`);
     });
 
+    test('a trailing false/undefined placeholder is not a parameter', () => {
+        const { term } = makeTerminal('ansi');
+
+        assert.equal(term.ansi.goto(2, 3, false, AsSequence), `${CSI}2;3H`);
+        assert.equal(term.ansi.goto(2, 3, undefined, AsSequence), `${CSI}2;3H`);
+        assert.equal(term.ansi.cuu(false, AsSequence), `${CSI}A`);
+    });
+
     test('without AsSequence the sequence is written and the terminal returned for chaining', () => {
         const { term, output } = makeTerminal('ansi');
 
@@ -112,6 +120,13 @@ describe('vtx', () => {
     test('hex3 encoding uses 0x30..0x3f for nibbles', () => {
         assert.equal(VTX.hex3encode('a.'), '612>');
         assert.equal(VTX.hex3encode('http://x/a.mp3'), '687474703:2?2?782?612>6=7033');
+    });
+
+    test('hex3 encodes the UTF-8 bytes of non-ASCII input', () => {
+        //  U+0100 is C4 80 in UTF-8
+        assert.equal(VTX.hex3encode('Ā'), '<480');
+        //  U+1F3B5 (a surrogate pair in JS) is F0 9F 8E B5
+        assert.equal(VTX.hex3encode('\u{1F3B5}'), '?09?8>;5');
     });
 
     test('audio object sequences', () => {

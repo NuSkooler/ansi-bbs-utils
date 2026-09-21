@@ -34,6 +34,13 @@ test('any other xterm-* variant is plain xterm', () => {
     assert.equal(normalizedTermType('xterm-new'), 'xterm');
 });
 
+test('an exact capability entry is never reinterpreted by the suffix heuristics', () => {
+    //  ansi-bbs-256color ends in -256color but is not an xterm
+    for (const key of [ 'ansi-bbs-256color', 'xterm-256color', 'xterm-truecolor', 'cterm', 'vtx', 'ansi-bbs' ]) {
+        assert.equal(normalizedTermType(key), key, key);
+    }
+});
+
 test('unknown types pass through unchanged', () => {
     assert.equal(normalizedTermType('dumb'), 'dumb');
     assert.equal(normalizedTermType('ansi-bbs'), 'ansi-bbs');

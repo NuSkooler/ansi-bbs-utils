@@ -9,7 +9,7 @@ test('package exports', () => {
     assert.equal(typeof(pkg.Terminal), 'function');
     assert.equal(typeof(pkg.Common), 'object');
     assert.equal(typeof(pkg.Common.AsSequence), 'symbol');
-    assert.equal(pkg.Common.CSI, '[');
+    assert.equal(pkg.Common.CSI, '\u001b[');
     assert.equal(typeof(pkg.Common.wantAsSequence), 'function');
 });
 
@@ -29,5 +29,5 @@ test('README usage compiles: type, color, write', () => {
     term.setTerminalType('ansi-bbs');
     term.fgColor('green').write('Hello, world!');
 
-    assert.deepEqual(writes, [ '[32m', 'Hello, world!' ]);
+    assert.deepEqual(writes, [ '\u001b[32m', 'Hello, world!' ]);
 });

@@ -40,6 +40,12 @@ test('every alias the normalizer produces has an entry', () => {
     }
 });
 
+test('every table key normalizes to itself', () => {
+    for (const key of Object.keys(Capabilities)) {
+        assert.equal(normalizedTermType(key), key, key);
+    }
+});
+
 test('capability names are spelled consistently', () => {
     for (const [ ttype, entry ] of Object.entries(Capabilities)) {
         assert.ok(!entry.capabilities.includes('emca-48'), `${ttype}: emca-48 typo`);
