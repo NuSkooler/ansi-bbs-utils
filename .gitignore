@@ -102,3 +102,6 @@ dist
 
 # TernJS port file
 .tern-port
+
+# live audio harness samples
+tools/samples/

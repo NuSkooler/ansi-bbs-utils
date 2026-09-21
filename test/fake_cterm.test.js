@@ -123,6 +123,19 @@ describe('cache', () => {
         fake.destroy();
     });
 
+    test('a multi-megabyte upload is stored whole', async () => {
+        const { fake, term } = FakeCTerm.connect();
+        const big = Buffer.alloc(3 * 1024 * 1024, 7);
+
+        term.cterm.storeFile('big.wav', big);
+        await fake.settle();
+
+        assert.equal(fake.cache.get('big.wav').bytes.length, big.length);
+        assert.equal(fake.cache.get('big.wav').md5, md5(big));
+        term.destroy();
+        fake.destroy();
+    });
+
     test('a shared cache models one BBS across sessions', async () => {
         const cache = new Map();
         const first = FakeCTerm.connect({ cache });
