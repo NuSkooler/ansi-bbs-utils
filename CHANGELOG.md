@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## Unreleased
+## 0.2.0 - 2026-09-21
 
 ### Added
 - **Audio.** `terminal.probeAudio()` asks a CTerm/SyncTERM-compatible terminal
