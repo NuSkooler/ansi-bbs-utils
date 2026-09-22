@@ -7,8 +7,9 @@ queryable protocol for this at the time of writing. It is designed so that
 other protocols (TERMinator's TAP+, VTX) can be added as further back-ends
 without changing what a BBS calls.
 
-Normative reference for the wire: https://www.syncterm.net/cterm.html, the
-"Audio APCs" section. Clients that speak it: SyncTERM built from master
+Normative reference for the wire: https://syncterm.bbsdev.net/cterm.html, the
+"Audio APCs" section (the `cterm.txt` copies found elsewhere predate it and
+do not describe audio). Clients that speak it: SyncTERM built from master
 (the feature is slated for 1.10; 1.9 does **not** have it) and IcyTerm 0.8.4
 and later.
 
@@ -78,6 +79,13 @@ audio.on('idle', ({ channel, handle, name }) => { /* hit finished */ });
 - `play()` and friends return promises that reject on a write failure (a
   closed socket) or an argument error. Timeouts waiting for the terminal never
   reject: silence is treated as "no" or "unknown".
+- **Switching background music: always `crossfade : true`.** It sets CTerm's
+  `X` flag on the `Queue`: the buffer already playing decays while the new one
+  fades in over `fadeIn`, both audible during the overlap, and it is a no-op
+  on an empty channel. Without the flag a `Queue` behind a *looping* buffer
+  ends the loop and waits for the current pass to finish, which for a
+  two-minute track is a two-minute delay.
+  `audio.play('music', 'music/cave', { loop : true, fadeIn : 1500, crossfade : true })`.
 - Tones (`audio.playTone('sfx', { hz : 440, duration : 250 })`) work on a
   terminal that has the audio APC but no file decoder.
 - `term.audio` before a probe, or on a terminal without audio, is a null
@@ -130,6 +138,7 @@ most 128 characters. Namespacing (`music/lobby`, `sfx/hit`) is encouraged.
 | `probeAudio()` on SyncTERM 1.9 or NetRunner | `backend : 'none'`, nothing drawn, nothing typed |
 | `ensureAsset()` twice, then reconnect and once more | one `C;S` in total |
 | `play('music', …, { loop })`, `volume(…, { ramp })`, `stop({ fade })` | audible, smooth |
+| `play('music', …, { loop, fadeIn, crossfade : true })` over a looping track | the new track starts at once; the old one fades out under it |
 | `play('sfx', …)` while typing | an `idle` event; no stray characters in the input |
 | a 3 MB Vorbis file | wall time acceptable; no interleaving glitches |
 | the same with baud emulation on | still correct, just slow |

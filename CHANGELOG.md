@@ -16,8 +16,12 @@ All notable changes to this project are documented here.
   answered by the terminal itself. Assets are uploaded once per BBS: the
   client's cache listing (with MD5s) is consulted first. Operations are
   serialized and wait for the socket. The CTerm `Wait` verb is never sent.
-  Terminals without audio get a null session that accepts everything and
-  plays nothing. See `docs/audio.md`. Verified live against IcyTerm 0.8.4 and
+  `crossfade : true` sets the `X` flag: the buffer already playing decays
+  under the new one's `fadeIn`; without it a `Queue` behind a looping buffer
+  ends the loop and waits for the current pass, so background music should
+  always be switched with it. Terminals without audio get a null session
+  that accepts everything and plays nothing. See `docs/audio.md`. Verified
+  live against IcyTerm 0.8.4 and
   a SyncTERM master build (CTerm 1.332); the cache check lists the root and
   then each needed subdirectory because SyncTERM's listing is a one-level
   glob of basenames while IcyTerm's is recursive.
@@ -51,8 +55,8 @@ All notable changes to this project are documented here.
   `ctermVersion`. Construct with `new Terminal(socket, { input: { … } })` to
   pass parser options.
 - `DeviceAttributes.parseDeviceAttributes()`: one home for mapping a DA reply
-  to a client (`cterm`, `icy_term`, `vtx`, `arctel`) and version, ported from
-  ENiGMA½ and Skull Crash.
+  to a client (`cterm`, `icy_term`, `vtx`, `arctel`) and version, so hosts
+  stop carrying their own copy of the table.
 - A test suite (`npm test`, built on `node:test`, no test dependencies) covering
   terminal type normalization, the capability table, colour mapping, the
   ANSI-BBS / ECMA-48 / pipe-code / VTX / OSC 8 handlers and `Terminal` itself.

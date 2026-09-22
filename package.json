@@ -28,7 +28,10 @@
     "ansi-bbs",
     "bbs",
     "ansi",
-    "terminals"
+    "terminals",
+    "cterm",
+    "syncterm",
+    "audio"
   ],
   "dependencies": {
     "iconv-lite": "^0.7.3"
