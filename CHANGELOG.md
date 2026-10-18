@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented here.
 
+## 0.2.1 - 2026-10-17
+
+### Fixed
+- **Audio went silent on IcyTerm after a few long sounds.** The CTerm
+  back-end loaded every play into the next of all 256 patch slots. The spec
+  says a `Queue` empties its slot, but IcyTerm (through at least 0.9.0)
+  copies the buffer and keeps the slot full, and drops any `Load` that would
+  take its resident patches past 192 MB, so every sound a connection had
+  played stayed resident until it ran out. Measured on a live game: the
+  fourteenth play of a session (an 80 s area loop) was dropped, and every
+  later loop with it. Each physical channel now owns two slots and
+  alternates between them (`2c`, `2c + 1`), so a session touches at most 28
+  slots and a `Load` replaces the buffer it lands on. Two rather than one so
+  back-to-back plays on one channel never overwrite a slot whose `Queue` an
+  asynchronous decoder has not reached yet. **Slot numbers on the wire
+  change**: anything asserting `S=` values from a session (rather than from
+  the handler) needs updating.
+
+### Added
+- `FakeCTerm` options to model a non-conforming client: `queueKeepsSlot`
+  (a `Queue` copies instead of moving) and `patchBudget` (a resident-bytes
+  ceiling past which a `Load` is dropped, recorded in `droppedLoads`), plus
+  `residentBytes()`.
+
 ## 0.2.0 - 2026-09-21
 
 ### Added
