@@ -244,8 +244,8 @@ describe('session', () => {
         assert.equal(music.logical, 'music');
         assert.equal(music.name, 'music/lobby');
         assert.deepEqual(fake.apcs.slice(-3), [
-            'SyncTERM:A;Load;S=0;music/lobby',
-            'SyncTERM:A;Queue;C=2;S=0;L;V=80',
+            'SyncTERM:A;Load;S=4;music/lobby',
+            'SyncTERM:A;Queue;C=2;S=4;L;V=80',
             'SyncTERM:A;Update;C=2',
         ]);
         await fake.settle();
@@ -268,7 +268,7 @@ describe('session', () => {
         done();
     });
 
-    test('effects rotate channels and slots; idle events carry the handle', async (t) => {
+    test('effects rotate channels, each on its own slots; idle events carry the handle', async (t) => {
         t.mock.timers.enable({ apis : [ 'setTimeout' ] });
         const { fake, term, done } = await probed({ playbackMs : 100 });
         const audio = term.audio;
@@ -280,9 +280,9 @@ describe('session', () => {
         const h2 = await audio.play('sfx', 'sfx/hit');
         assert.equal(h1.channel, 3);
         assert.equal(h2.channel, 4);
-        assert.ok(fake.apcs.includes('SyncTERM:A;Load;S=0;sfx/hit'));
-        assert.ok(fake.apcs.includes('SyncTERM:A;Load;S=1;sfx/hit'));
-        assert.ok(fake.apcs.includes('SyncTERM:A;Queue;C=4;S=1'));
+        assert.ok(fake.apcs.includes('SyncTERM:A;Load;S=6;sfx/hit'));
+        assert.ok(fake.apcs.includes('SyncTERM:A;Load;S=8;sfx/hit'));
+        assert.ok(fake.apcs.includes('SyncTERM:A;Queue;C=4;S=8'));
         await fake.settle();
 
         t.mock.timers.tick(100);
@@ -302,11 +302,11 @@ describe('session', () => {
         audio.asset({ name : 'sfx/hit', bytes });
 
         await audio.play('sfx', 'sfx/hit', { volume : 80, pan : 50 });
-        assert.equal(fake.apcs.at(-2), 'SyncTERM:A;Queue;C=3;S=0;VL=40;VR=80');
+        assert.equal(fake.apcs.at(-2), 'SyncTERM:A;Queue;C=3;S=6;VL=40;VR=80');
         await audio.play('sfx', 'sfx/hit', { pan : -50 });
-        assert.equal(fake.apcs.at(-2), 'SyncTERM:A;Queue;C=4;S=1;VL=100;VR=50');
+        assert.equal(fake.apcs.at(-2), 'SyncTERM:A;Queue;C=4;S=8;VL=100;VR=50');
         await audio.play(7, 'sfx/hit', { fadeIn : 100, crossfade : true });
-        assert.equal(fake.apcs.at(-2), 'SyncTERM:A;Queue;C=7;S=2;I=100;X');
+        assert.equal(fake.apcs.at(-2), 'SyncTERM:A;Queue;C=7;S=14;I=100;X');
 
         await assert.rejects(audio.play('sfx', 'sfx/hit', { pan : 200 }), RangeError);
         done();
@@ -320,8 +320,8 @@ describe('session', () => {
         assert.equal(tone.channel, 3);
         assert.equal(tone.name, null);
         assert.deepEqual(fake.apcs.slice(-3), [
-            'SyncTERM:A;Synth;S=0;W=SIN;F=440;T=250',
-            'SyncTERM:A;Queue;C=3;S=0;V=50',
+            'SyncTERM:A;Synth;S=6;W=SIN;F=440;T=250',
+            'SyncTERM:A;Queue;C=3;S=6;V=50',
             'SyncTERM:A;Update;C=3',
         ]);
 
@@ -357,7 +357,7 @@ describe('session', () => {
         fake.socket.writable = true;
         const h = await term.audio.play('sfx', 'sfx/hit');
         assert.equal(h.channel, 3, 'the failed play never reached channel allocation');
-        assert.ok(fake.apcs.includes('SyncTERM:A;Queue;C=3;S=0'));
+        assert.ok(fake.apcs.includes('SyncTERM:A;Queue;C=3;S=6'));
         done();
     });
 
@@ -411,7 +411,7 @@ describe('session', () => {
         term.audio.asset({ name : 'sfx/hit', bytes });
 
         await term.audio.play('sfx', 'sfx/hit', { volumeLeft : 10, volumeRight : '-3dB', fadeOut : 250 });
-        assert.equal(fake.apcs.at(-2), 'SyncTERM:A;Queue;C=3;S=0;O=250;VL=10;VR=-3dB');
+        assert.equal(fake.apcs.at(-2), 'SyncTERM:A;Queue;C=3;S=6;O=250;VL=10;VR=-3dB');
 
         assert.equal(term.audio.capabilities().blobs, true, 'unknown revision: assume the newer verbs');
         term.ctermVersion = '1.326';
@@ -453,5 +453,80 @@ describe('session', () => {
         fake.destroy();
         term.destroy();
         void done;
+    });
+});
+
+describe('patch slots', () => {
+    //  [{ slot, channel }] for every Load/Synth and the Queue that follows it
+    const plays = fake => {
+        const out = [];
+        let pending = null;
+        for (const apc of fake.apcs) {
+            const load = /^SyncTERM:A;(?:Load|Synth);S=(\d+)/.exec(apc);
+            if (load) {
+                pending = Number(load[1]);
+                continue;
+            }
+            const queue = /^SyncTERM:A;Queue;C=(\d+);S=(\d+)/.exec(apc);
+            if (queue && null !== pending) {
+                out.push({ channel : Number(queue[1]), slot : Number(queue[2]), loaded : pending });
+                pending = null;
+            }
+        }
+        return out;
+    };
+
+    test('a long session touches at most two slots per channel, each its own', async () => {
+        const { fake, term, done } = await probed();
+        const audio = term.audio;
+        audio.asset({ name : 'music/lobby', bytes });
+        audio.asset({ name : 'sfx/hit', bytes });
+        for (let i = 0; i < 100; i++) {
+            await audio.play('music', 'music/lobby', { loop : true });
+            await audio.play('sfx', 'sfx/hit');
+        }
+        await audio.playTone('sfx', { hz : 440, duration : 50 });
+
+        const seen = plays(fake);
+        assert.equal(seen.length, 201);
+        for (const { channel, slot, loaded } of seen) {
+            assert.equal(slot, loaded, 'the Queue takes the slot its Load filled');
+            assert.ok(slot === channel * 2 || slot === channel * 2 + 1, `channel ${channel} played from slot ${slot}`);
+        }
+        assert.ok(new Set(seen.map(p => p.slot)).size <= 28);
+        done();
+    });
+
+    test('back-to-back plays on one channel use different slots; the third reuses the first', async () => {
+        const { fake, term, done } = await probed();
+        const audio = term.audio;
+        audio.asset({ name : 'music/lobby', bytes });
+        for (let i = 0; i < 3; i++) {
+            await audio.play(2, 'music/lobby');
+        }
+        assert.deepEqual(plays(fake).map(p => p.slot), [ 4, 5, 4 ]);
+        done();
+    });
+
+    //  The defect this numbering exists for. A client that COPIES on Queue
+    //  (IcyTerm through 0.9.0) keeps every slot it was ever handed full, and
+    //  refuses a Load past its patch ceiling -- so rotating through all 256
+    //  slots went silent after a handful of long loops.
+    test('a client that keeps queued slots full never runs out of patch memory', async () => {
+        //  the bound: 14 channels x 2 slots, each holding one sound; the old
+        //  rotation passes it after 28 plays, and this session makes 80
+        const budget = bytes.length * 28;
+        const { fake, term, done } = await probed({ queueKeepsSlot : true, patchBudget : budget });
+        const audio = term.audio;
+        audio.asset({ name : 'music/lobby', bytes });
+        audio.asset({ name : 'sfx/hit', bytes });
+        for (let i = 0; i < 40; i++) {
+            await audio.play('music', 'music/lobby', { loop : true });
+            await audio.play('sfx', 'sfx/hit');
+        }
+        assert.deepEqual(fake.droppedLoads, []);
+        assert.ok(fake.residentBytes() <= budget);
+        assert.ok(fake.channels.get(2).queue.length > 0, 'the last music play reached its channel');
+        done();
     });
 });

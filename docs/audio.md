@@ -22,6 +22,14 @@ and later.
   (ANSI music, RIP/OOII effects); a BBS queues onto `2..15`.
 - `Queue` **moves** a slot's buffer onto a channel and empties the slot. Every
   play is therefore a fresh `Load` followed by a `Queue`.
+  **The session gives each physical channel two slots of its own** (channel
+  `c` uses `2c` and `2c + 1`, alternating), so it touches at most 28 slots
+  however many sounds it plays. On a conforming terminal any slot would do;
+  the bound is for one that is not: IcyTerm through at least 0.9.0 *copies*
+  on `Queue` and keeps the slot full, and drops a `Load` once its resident
+  patches pass 192 MB. Rotating through all 256 slots left every sound a
+  session had played resident there, so a few long loops (~25 MB decoded
+  each) silenced the terminal for the rest of the connection.
 - **The file cache**: `SyncTERM:C;S` stores a base64-encoded file in a
   per-BBS directory on the client that **persists across sessions**;
   `SyncTERM:C;L` lists it with MD5s.
@@ -158,11 +166,15 @@ const { fake, term } = FakeCTerm.connect({ sndfile : true, playbackMs : 100 });
 await term.probeAudio();
 await term.audio.play('music', { name : 'music/lobby', bytes }, { loop : true });
 assert.equal(fake.channels.get(2).running, true);
-assert.ok(fake.apcs.includes('SyncTERM:A;Queue;C=2;S=0;L'));
+assert.ok(fake.apcs.includes('SyncTERM:A;Queue;C=2;S=4;L'));
 ```
 
 Options: `client` (`cterm` | `icy_term` | anything else answers no DA),
 `ctermVersion`, `audio : false` (no audio APC at all), `sndfile : false`
 (tones only), `formats` (`{ '32;96' : true }`), `playbackMs`, `cache` (share
 a `Map` between fakes to model one client across sessions),
-`fragmentReplies`.
+`fragmentReplies`. To model a client that does not follow the spec's
+`Queue` semantics: `queueKeepsSlot : true` (a `Queue` copies and leaves the
+slot full, as IcyTerm does) and `patchBudget` (bytes of resident slots a
+`Load` may bring the total to; past it the `Load` is dropped and recorded in
+`fake.droppedLoads`; `fake.residentBytes()` reports the total).
