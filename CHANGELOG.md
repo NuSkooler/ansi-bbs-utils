@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## Unreleased
+## 0.2.2 - 2026-10-26
 
 ### Added
 - **enig-term is a known client.** Its DA reply (`CSI = ` "enig-term" as
