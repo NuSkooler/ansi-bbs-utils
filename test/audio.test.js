@@ -80,6 +80,20 @@ describe('probe', () => {
         fake.destroy();
     });
 
+    test('a client identified as enig-term is asked', async () => {
+        const { fake, term } = FakeCTerm.connect({ client : 'enig_term', ctermVersion : '0.1.0' });
+        term.cterm.queryDeviceAttributes();
+        await fake.settle();
+        assert.equal(term.getTerminalClient(), 'enig_term');
+
+        const result = await term.probeAudio();
+        assert.equal(result.backend, 'cterm');
+        assert.equal(result.files, true);
+        assert.deepEqual(fake.apcs, [ 'SyncTERM:Q;libsndfile' ]);
+        term.destroy();
+        fake.destroy();
+    });
+
     test('the terminal picks up its identity from a DA reply and the probe reports it', async () => {
         const { fake, term } = FakeCTerm.connect({ ctermVersion : '1.332' });
         term.cterm.queryDeviceAttributes();

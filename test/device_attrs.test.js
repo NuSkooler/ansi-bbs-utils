@@ -46,6 +46,15 @@ test('IcyTerm: "IcyTerm" prefix then version; no CTerm revision', () => {
     });
 });
 
+test('enig-term: "enig-term" prefix then version; no CTerm revision', () => {
+    assert.deepEqual(parseDeviceAttributes('101;110;105;103;45;116;101;114;109;0;1;0'), {
+        client : 'enig_term', version : '0.1.0', ctermVersion : null,
+    });
+    assert.deepEqual(parseDeviceAttributes('101;110;105;103;45;116;101;114;109'), {
+        client : 'enig_term', version : null, ctermVersion : null,
+    });
+});
+
 test('exact matches: VTX and Arctel', () => {
     assert.deepEqual(parseDeviceAttributes('50;86;84;88'), {
         client : 'vtx', version : null, ctermVersion : null,
