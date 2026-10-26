@@ -169,7 +169,8 @@ assert.equal(fake.channels.get(2).running, true);
 assert.ok(fake.apcs.includes('SyncTERM:A;Queue;C=2;S=4;L'));
 ```
 
-Options: `client` (`cterm` | `icy_term` | anything else answers no DA),
+Options: `client` (`cterm` | `icy_term` | `enig_term` | anything else answers
+no DA),
 `ctermVersion`, `audio : false` (no audio APC at all), `sndfile : false`
 (tones only), `formats` (`{ '32;96' : true }`), `playbackMs`, `cache` (share
 a `Map` between fakes to model one client across sessions),

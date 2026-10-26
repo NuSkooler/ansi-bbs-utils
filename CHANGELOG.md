@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+### Added
+- **enig-term is a known client.** Its DA reply (`CSI = ` "enig-term" as
+  ASCII codes, then `major;minor;patch` `c`) maps to `enig_term`, and
+  `probeAudio()` asks it like `cterm` and `icy_term`. Before this, a host
+  that had already named the client `enig_term` (ENiGMA½ does, and passes it
+  on to doors) got `backend: 'none'` without the terminal being asked.
+  `FakeCTerm` accepts `client: 'enig_term'`.
+
 ## 0.2.1 - 2026-10-17
 
 ### Fixed
