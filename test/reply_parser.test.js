@@ -57,7 +57,7 @@ function record(parser) {
             log.push({ data : s });
         }
     });
-    for (const event of [ 'apc', 'report', 'device attributes', 'cpr', 'reply error' ]) {
+    for (const event of [ 'apc', 'report', 'device attributes', 'cpr', 'reply error', 'reply tail' ]) {
         parser.on(event, payload => log.push({ event, payload }));
     }
     return log;
@@ -341,7 +341,8 @@ describe('timeouts and flushing', () => {
 
     test('a reply in progress is dropped after replyTimeout, not leaked', (t) => {
         t.mock.timers.enable({ apis : [ 'setTimeout' ] });
-        const parser = new ReplyParser({ replyTimeout : 2000 });
+        //  lateTailTimeout 0: the drop alone, as before late tails were discarded
+        const parser = new ReplyParser({ replyTimeout : 2000, lateTailTimeout : 0 });
         const log = record(parser);
 
         parser.feed(`${APC}SyncTERM:C;L\n`);
@@ -357,6 +358,21 @@ describe('timeouts and flushing', () => {
         t.mock.timers.tick(2000);
         assert.equal(log[1].payload.reason, 'timeout');
         assert.deepEqual(log[1].payload.dropped, Buffer.from(`${CSI}=7;10`, 'latin1'));
+        parser.destroy();
+    });
+
+    test('a CSI reply that times out is dropped with no late discard', (t) => {
+        t.mock.timers.enable({ apis : [ 'setTimeout', 'Date' ] });
+        const parser = new ReplyParser({ replyTimeout : 2000 });
+        const log = record(parser);
+
+        parser.feed(`${CSI}=7;10`);
+        t.mock.timers.tick(2000);
+        assert.deepEqual(eventsOf(log).map(e => e.event), [ 'reply error' ]);
+        assert.equal(log[0].payload.discarding, undefined);
+        assert.equal(parser.pending, false);
+        parser.feed('x');
+        assert.equal(dataOf(log), 'x');
         parser.destroy();
     });
 
@@ -376,6 +392,7 @@ describe('timeouts and flushing', () => {
     });
 
     test('a timeout of 0 disables holding', (t) => {
+        //  (and with no reply timeout there is never a late tail)
         t.mock.timers.enable({ apis : [ 'setTimeout' ] });
         const parser = new ReplyParser({ escapeTimeout : 0, replyTimeout : 0 });
         const log = record(parser);
@@ -416,5 +433,140 @@ describe('timeouts and flushing', () => {
         parser.feed('x');
         parser.flush();
         assert.deepEqual(log, []);
+    });
+});
+
+//
+//  A cache listing whose head arrives at once and whose lines trail by
+//  seconds (seen live: SyncTERM 1.333, the body cut after 14 bytes, the
+//  rest more than 2 s later). Before late tails were discarded, the tail
+//  reached the key parser as typed filenames, line feeds and an ESC.
+//
+describe('a late tail after a reply timeout', () => {
+    const HEAD = `${APC}SyncTERM:C;L\n\n`;          //  14 body bytes
+    const TAIL = `\n\nlobby.ogg\t595f44fec1e92a71d3e9e77456ba80d1\n${ST}`;
+
+    const parserFor = (t, options = {}) => {
+        t.mock.timers.enable({ apis : [ 'setTimeout', 'Date' ] });
+        const parser = new ReplyParser(Object.assign({ replyTimeout : 2000, lateTailTimeout : 10000 }, options));
+        return { parser, log : record(parser) };
+    };
+
+    test('is discarded up to its terminator, never passed through', (t) => {
+        const { parser, log } = parserFor(t);
+
+        parser.feed(HEAD);
+        t.mock.timers.tick(2000);
+        assert.deepEqual(log, [
+            { event : 'reply error', payload : { reason : 'timeout', dropped : Buffer.from('SyncTERM:C;L\n\n'), discarding : true } },
+        ]);
+        assert.equal(parser.state, ReplyParser.State.LateApc);
+        assert.equal(parser.pending, true);
+
+        t.mock.timers.tick(500);
+        parser.feed(TAIL + 'after');
+        assert.equal(dataOf(log), 'after', 'only what follows the terminator');
+        assert.deepEqual(log[1], {
+            event : 'reply tail',
+            payload : { discarded : Buffer.byteLength(TAIL), terminated : true, ms : 500 },
+        });
+        assert.equal(parser.pending, false);
+        parser.destroy();
+    });
+
+    test('...however it is chunked', (t) => {
+        const { parser, log } = parserFor(t);
+        parser.feed(HEAD);
+        t.mock.timers.tick(2000);
+        for (const ch of TAIL) {
+            parser.feed(ch);
+        }
+        parser.feed('k');
+        assert.equal(dataOf(log), 'k');
+        assert.equal(log.find(e => 'reply tail' === e.event).payload.terminated, true);
+        parser.destroy();
+    });
+
+    test('gives up at lateTailTimeout from the drop, and typing does not extend it', (t) => {
+        const { parser, log } = parserFor(t);
+        parser.feed(HEAD);
+        t.mock.timers.tick(2000);
+
+        for (let i = 0; i < 9; i += 1) {
+            t.mock.timers.tick(1000);
+            parser.feed('z');               //  swallowed with the tail
+        }
+        assert.equal(dataOf(log), '');
+        t.mock.timers.tick(1000);
+        assert.deepEqual(log[1], { event : 'reply tail', payload : { discarded : 9, terminated : false, ms : 10000 } });
+        assert.equal(parser.pending, false);
+
+        parser.feed('typed');
+        assert.equal(dataOf(log), 'typed');
+        parser.destroy();
+    });
+
+    test('an ESC that is not a terminator ends it, and its key goes through', (t) => {
+        const { parser, log } = parserFor(t);
+        parser.feed(HEAD);
+        t.mock.timers.tick(2000);
+
+        parser.feed(`ab${KEY_UP}c`);
+        assert.equal(dataOf(log), `${KEY_UP}c`);
+        assert.deepEqual(log[1], { event : 'reply tail', payload : { discarded : 2, terminated : false, ms : 0 } });
+        parser.destroy();
+    });
+
+    test('the next reply is still a reply', (t) => {
+        const { parser, log } = parserFor(t);
+        parser.feed(HEAD);
+        t.mock.timers.tick(2000);
+
+        parser.feed(`x${LISTING}`);
+        assert.deepEqual(eventsOf(log).map(e => e.event), [ 'reply error', 'reply tail', 'apc' ]);
+        assert.equal(log.find(e => 'apc' === e.event).payload.body, LISTING_BODY);
+        assert.equal(dataOf(log), '');
+        parser.destroy();
+    });
+
+    test('flush() ends it without a second reply error', (t) => {
+        const { parser, log } = parserFor(t);
+        parser.feed(HEAD);
+        t.mock.timers.tick(2000);
+        parser.flush();
+        assert.deepEqual(eventsOf(log).map(e => e.event), [ 'reply error', 'reply tail' ]);
+        assert.equal(parser.pending, false);
+        parser.destroy();
+    });
+
+    test('a flushed APC is dropped outright: only a timeout waits for a tail', (t) => {
+        const { parser, log } = parserFor(t);
+        parser.feed(HEAD);
+        parser.flush();
+        assert.deepEqual(log, [
+            { event : 'reply error', payload : { reason : 'flushed', dropped : Buffer.from('SyncTERM:C;L\n\n') } },
+        ]);
+        assert.equal(parser.pending, false);
+        parser.destroy();
+    });
+
+    test('lateTailTimeout 0 is the old behaviour: the tail passes through', (t) => {
+        const { parser, log } = parserFor(t, { lateTailTimeout : 0 });
+        parser.feed(HEAD);
+        t.mock.timers.tick(2000);
+        assert.equal(log[0].payload.discarding, undefined);
+        parser.feed(TAIL);
+        t.mock.timers.tick(100);
+        assert.notEqual(dataOf(log), '');
+        parser.destroy();
+    });
+
+    test('destroy() during the discard stops its timer', (t) => {
+        const { parser, log } = parserFor(t);
+        parser.feed(HEAD);
+        t.mock.timers.tick(2000);
+        parser.destroy();
+        t.mock.timers.tick(20000);
+        assert.deepEqual(eventsOf(log).map(e => e.event), [ 'reply error' ]);
     });
 });

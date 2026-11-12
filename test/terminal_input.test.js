@@ -89,6 +89,24 @@ describe('Terminal input side', () => {
         term.destroy();
     });
 
+    test('a late tail is reported and never becomes input', (t) => {
+        t.mock.timers.enable({ apis : [ 'setTimeout', 'Date' ] });
+        const term = new Terminal(null, { input : { replyTimeout : 100, lateTailTimeout : 1000 } });
+        const seen = [];
+        let err, tail;
+        term.on('input', buf => seen.push(buf.toString('latin1')));
+        term.on('reply error', e => err = e);
+        term.on('reply tail', e => tail = e);
+
+        term.feed(`${ESC}_SyncTERM:C;L\n\n`);
+        t.mock.timers.tick(100);
+        assert.equal(err.discarding, true);
+        term.feed(`\n${ESC}\\ok`);
+        assert.deepEqual(seen, [ 'ok' ]);
+        assert.equal(tail.terminated, true);
+        term.destroy();
+    });
+
     test('flushInput() releases held keystrokes', () => {
         const { term } = makeTerminal('ansi');
         const seen = [];
