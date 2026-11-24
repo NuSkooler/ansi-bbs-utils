@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+### Fixed
+- **A slow terminal reply leaked its tail as keystrokes.** A reply in progress
+  that went quiet past `replyTimeout` was dropped and the parser returned to
+  ground, so whatever arrived after was passed through as input. Seen live with
+  SyncTERM 1.333: a cache listing's header arrived at once and its lines more
+  than two seconds later, and a BBS read the line feeds and the closing ESC as
+  typed keys. An APC that times out now has its late tail DISCARDED up to the
+  string terminator, for at most `lateTailTimeout` (new option, default
+  10000 ms from the drop, not re-armed by input; `0` restores the old
+  behaviour). An ESC followed by anything but a backslash ends the discard
+  early and is parsed as a new sequence, so a following reply is still a reply
+  and an arrow key gets out. A private CSI reply is unchanged.
+
+### Added
+- `reply error` carries `discarding: true` when a late tail follows, and a new
+  `reply tail` event (`{ discarded, terminated, ms }`, forwarded by
+  `Terminal`) reports how the discard ended. New parser states `late-apc` /
+  `late-apc-escape`.
+
 ## 0.2.2 - 2026-10-26
 
 ### Added

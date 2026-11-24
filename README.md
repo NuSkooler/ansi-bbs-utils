@@ -99,6 +99,7 @@ term.on('device attributes', da => {
 term.on('report', ({ prefix, params }) => {});         //  CSI = 7 ; 100 ; 1 n
 term.on('apc', ({ body }) => {});                      //  ESC _ ... ESC \
 term.on('reply error', ({ reason, dropped }) => {});   //  overflow | timeout | aborted | flushed
+term.on('reply tail', ({ discarded, terminated }) => {}); //  a timed-out APC's late tail, thrown away
 
 term.ecma.cpr();  //  or any query; replies show up above
 ```
@@ -107,8 +108,14 @@ This is a pre-filter, not a key parser: it never interprets keyboard
 sequences. A lone `ESC` (or `ESC [` with digits) is held for at most
 `escapeTimeout` (50 ms) in case a reply follows in the next packet, then passed
 through. A reply in progress is bounded (`maxApcLength`, `maxCsiLength`) and
-timed (`replyTimeout`, 2 s); on either limit it is dropped with a `reply error`
-rather than turned into keystrokes. Options go in the constructor:
+timed (`replyTimeout`, 2 s, measured from the last byte); on either limit it is
+dropped with a `reply error` rather than turned into keystrokes. An APC that
+times out is usually slow rather than lost (a cache listing's lines can trail
+its header by seconds), so its tail is then discarded up to the string
+terminator for up to `lateTailTimeout` (10 s from the drop; `0` turns it off):
+the error carries `discarding: true` and a `reply tail` event says how the
+discard ended. An ESC that is not a terminator ends it early. Options go in
+the constructor:
 `new Terminal(socket, { input: { captureCPR: true } })`. The parser is also
 available standalone as `ReplyParser` for hosts with their own terminal object.
 

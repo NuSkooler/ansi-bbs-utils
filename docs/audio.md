@@ -128,6 +128,15 @@ still does not know that lives in a subdirectory, lists `dir/*` and prefixes
 the basenames it gets back. Either way an asset is uploaded once per client,
 not once per session.
 
+A listing can be SLOW. SyncTERM 1.333 has been seen answering with its
+header at once and the rest more than two seconds later, past both the
+reply parser's `replyTimeout` and the back-end's `listingTimeout` (both
+2 s by default). Silence is read as "the client has nothing", so every
+asset is uploaded again. A host whose callers come over slow or relayed
+links should raise both, `listingTimeout` above `replyTimeout`:
+`new Terminal(socket, { input: { replyTimeout: 10000 }, audio: { listingTimeout: 12000 } })`.
+Waiting on a listing delays only the audio operation chain, not output.
+
 Prefer small files. An upload rides the telnet session as base64 (about 1.37
 times the file size) and will crawl under SyncTERM's baud-rate emulation. The
 once-per-BBS cache means a returning caller pays that cost only once.
