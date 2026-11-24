@@ -22,6 +22,13 @@ All notable changes to this project are documented here.
   `reply tail` event (`{ discarded, terminated, ms }`, forwarded by
   `Terminal`) reports how the discard ended. New parser states `late-apc` /
   `late-apc-escape`.
+- **Probe board** (`tools/probe_board`, not published): a telnet service that records
+  how a terminal answers detection probes, one JSON report per connection.
+  - It records TTYPE, NAWS byte for byte, and NEW-ENVIRON.
+  - Each probe is sent with a sentinel cursor report, so replies can't shift into the next probe.
+  - `analyze()` detects transposed or offset cursor reports, wrapped, clamped or ignored size
+    moves, malformed NAWS, the DA identity, and which probes were printed as text.
+  - Reports recorded from six DOS terminal programs are test fixtures.
 
 ## 0.2.2 - 2026-10-26
 

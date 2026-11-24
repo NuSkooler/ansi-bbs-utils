@@ -105,3 +105,6 @@ dist
 
 # live audio harness samples
 tools/samples/
+
+# probe board reports (curated ones go in test/fixtures/probe_board/)
+probe-reports/
