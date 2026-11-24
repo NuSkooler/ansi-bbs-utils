@@ -257,8 +257,32 @@ function analyze(report) {
         }
     }
 
-    let recommended = { cols : 80, rows : 25, source : 'default' };
     const usable = s => s && plausible(s.cols, s.rows) && !s.flags.includes('did-not-move');
+
+    //  NAWS checked against a measured size. telnet.exe on Windows 11 sends only the low
+    //  byte of each dimension: a 270-column window goes out as 00 0E (14).
+    const measured = usable(s255) ? s255 : (usable(s999) ? s999 : null);
+    if (naws && !naws.malformed && measured) {
+        const wrapped = (sent, real) => real > 255 && sent === real % 256;
+        if (wrapped(naws.width, measured.cols) || wrapped(naws.height, measured.rows)) {
+            naws.truncated8 = true;
+            notes.push(`NAWS ${naws.width}x${naws.height} is ${measured.cols}x${measured.rows} ` +
+                'with the high byte of each dimension dropped');
+        }
+    }
+    if (naws && telnet.negotiation &&
+        !telnet.negotiation.some(n => 'in' === n.dir && 'WILL' === n.cmd && 'NAWS' === n.opt)) {
+        notes.push('NAWS was sent without WILL NAWS');
+    }
+
+    //  DSR 5 should be answered with CSI 0 n. Qmodem and NetRunner send a cursor report.
+    const dsr = probe['dsr-status'];
+    if (dsr && dsr.answered && !dsr.replies.includes('ESC[0n')) {
+        const got = [ ...dsr.replies, ...dsr.cprs ].join(' ');
+        notes.push(`CSI 5 n was answered with ${got}, not CSI 0 n`);
+    }
+
+    let recommended = { cols : 80, rows : 25, source : 'default' };
     if (naws && naws.plausible) {
         recommended = { cols : naws.width, rows : naws.height, source : 'naws' };
     } else if (usable(s255)) {

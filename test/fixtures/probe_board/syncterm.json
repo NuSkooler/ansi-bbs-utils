@@ -1,0 +1,551 @@
+{
+ "tool": "ansi-bbs-utils probe board",
+ "version": 1,
+ "label": "SyncTERM 1.10b",
+ "peer": "127.0.0.1",
+ "telnet": {
+  "negotiation": [
+   {
+    "t": 0,
+    "dir": "out",
+    "cmd": "WILL",
+    "opt": "ECHO"
+   },
+   {
+    "t": 0,
+    "dir": "out",
+    "cmd": "WILL",
+    "opt": "SGA"
+   },
+   {
+    "t": 0,
+    "dir": "out",
+    "cmd": "DO",
+    "opt": "SGA"
+   },
+   {
+    "t": 0,
+    "dir": "out",
+    "cmd": "DO",
+    "opt": "TTYPE"
+   },
+   {
+    "t": 0,
+    "dir": "out",
+    "cmd": "DO",
+    "opt": "NAWS"
+   },
+   {
+    "t": 0,
+    "dir": "out",
+    "cmd": "DO",
+    "opt": "NEW_ENVIRON"
+   },
+   {
+    "t": 1,
+    "dir": "in",
+    "cmd": "WILL",
+    "opt": "SGA"
+   },
+   {
+    "t": 1,
+    "dir": "in",
+    "cmd": "DO",
+    "opt": "SGA"
+   },
+   {
+    "t": 1,
+    "dir": "in",
+    "cmd": "WILL",
+    "opt": 0
+   },
+   {
+    "t": 1,
+    "dir": "in",
+    "cmd": "DO",
+    "opt": 0
+   },
+   {
+    "t": 1,
+    "dir": "in",
+    "cmd": "DO",
+    "opt": "ECHO"
+   },
+   {
+    "t": 108,
+    "dir": "in",
+    "cmd": "WILL",
+    "opt": "TTYPE"
+   },
+   {
+    "t": 108,
+    "dir": "in",
+    "cmd": "WILL",
+    "opt": "NAWS"
+   },
+   {
+    "t": 108,
+    "dir": "in",
+    "cmd": "WONT",
+    "opt": "NEW_ENVIRON"
+   }
+  ],
+  "ttypes": [
+   "syncterm",
+   "syncterm"
+  ],
+  "naws": [
+   {
+    "t": 108,
+    "hex": "00 50 00 18",
+    "length": 4,
+    "width": 80,
+    "height": 24
+   }
+  ],
+  "environ": [],
+  "subnegotiations": []
+ },
+ "probe": {
+  "started": "2026-11-24T19:16:31.492Z",
+  "safe": false,
+  "mode": "sentinel",
+  "sentinel": "\u001b[2;7R",
+  "steps": [
+   {
+    "id": "baseline",
+    "sent": "",
+    "rx": "\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 1,
+      "n": 12
+     }
+    ],
+    "ms": 154,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "cpr-home",
+    "sent": "\u001b[1;1H\u001b[6n",
+    "rx": "\u001b[1;1R\u001b[1;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 1,
+      "n": 18
+     }
+    ],
+    "ms": 1,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "da1",
+    "sent": "\u001b[c",
+    "rx": "\u001b[=67;84;101;114;109;1;333c\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 1,
+      "n": 39
+     }
+    ],
+    "ms": 1,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "da1-0",
+    "sent": "\u001b[0c",
+    "rx": "\u001b[=67;84;101;114;109;1;333c\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 1,
+      "n": 39
+     }
+    ],
+    "ms": 1,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "da2",
+    "sent": "\u001b[>c",
+    "rx": "\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 0,
+      "n": 12
+     }
+    ],
+    "ms": 0,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "da3",
+    "sent": "\u001b[=c",
+    "rx": "\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 0,
+      "n": 12
+     }
+    ],
+    "ms": 0,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "cterm-da",
+    "sent": "\u001b[<c",
+    "rx": "\u001b[<0;1;2;3;4;5;6;7;8c\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 0,
+      "n": 33
+     }
+    ],
+    "ms": 0,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "dsr-status",
+    "sent": "\u001b[5n",
+    "rx": "\u001b[0n\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 0,
+      "n": 16
+     }
+    ],
+    "ms": 0,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "size-999",
+    "sent": "\u001b[999;999H\u001b[6n",
+    "rx": "\u001b[24;80R\u001b[24;80R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 0,
+      "n": 22
+     }
+    ],
+    "ms": 0,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "size-255n",
+    "sent": "\u001b[255n",
+    "rx": "\u001b[24;80R\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 1,
+      "n": 20
+     }
+    ],
+    "ms": 1,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "size-18t",
+    "sent": "\u001b[18t",
+    "rx": "\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 0,
+      "n": 12
+     }
+    ],
+    "ms": 0,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "decxcpr",
+    "sent": "\u001b[?6n",
+    "rx": "\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 1,
+      "n": 12
+     }
+    ],
+    "ms": 1,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "cterm-font-state",
+    "sent": "\u001b[=1n",
+    "rx": "\u001b[=1;46;99;0;0;0;0n\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 1,
+      "n": 31
+     }
+    ],
+    "ms": 1,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "cterm-mode",
+    "sent": "\u001b[=2n",
+    "rx": "\u001b[=2;7;25;80n\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 0,
+      "n": 19
+     },
+     {
+      "t": 0,
+      "n": 6
+     }
+    ],
+    "ms": 0,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "cterm-cell",
+    "sent": "\u001b[=3n",
+    "rx": "\u001b[=3;16;8n\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 1,
+      "n": 16
+     },
+     {
+      "t": 1,
+      "n": 6
+     }
+    ],
+    "ms": 1,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "cterm-6n",
+    "sent": "\u001b[=6n",
+    "rx": "\u001b[=6;1n\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 0,
+      "n": 13
+     },
+     {
+      "t": 0,
+      "n": 6
+     }
+    ],
+    "ms": 0,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "font-select",
+    "sent": "\u001b[0;0 D",
+    "rx": "\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 1,
+      "n": 12
+     }
+    ],
+    "ms": 1,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "xtversion",
+    "sent": "\u001b[>0q",
+    "rx": "\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 1,
+      "n": 12
+     }
+    ],
+    "ms": 1,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "osc-fg",
+    "sent": "\u001b]10;?\u001b\\",
+    "rx": "\u001b]10;rgb:a8/a8/a8\u001b\\\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 1,
+      "n": 31
+     }
+    ],
+    "ms": 1,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "apc-empty",
+    "sent": "\u001b_\u001b\\",
+    "rx": "\u001b[4;1R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 3,
+      "n": 12
+     }
+    ],
+    "ms": 3,
+    "complete": true,
+    "late": false
+   },
+   {
+    "id": "enq",
+    "sent": "\u0005",
+    "rx": "\u001b[4;2R\u001b[2;7R",
+    "chunks": [
+     {
+      "t": 1,
+      "n": 12
+     }
+    ],
+    "ms": 1,
+    "complete": true,
+    "late": false
+   }
+  ]
+ },
+ "probeDefs": {
+  "baseline": {
+   "send": "",
+   "cprs": 0,
+   "moves": false,
+   "risk": "safe"
+  },
+  "cpr-home": {
+   "send": "\u001b[1;1H\u001b[6n",
+   "cprs": 1,
+   "moves": true,
+   "risk": "safe"
+  },
+  "da1": {
+   "send": "\u001b[c",
+   "cprs": 0,
+   "moves": false,
+   "risk": "safe"
+  },
+  "da1-0": {
+   "send": "\u001b[0c",
+   "cprs": 0,
+   "moves": false,
+   "risk": "safe"
+  },
+  "da2": {
+   "send": "\u001b[>c",
+   "cprs": 0,
+   "moves": false,
+   "risk": "safe"
+  },
+  "da3": {
+   "send": "\u001b[=c",
+   "cprs": 0,
+   "moves": false,
+   "risk": "safe"
+  },
+  "cterm-da": {
+   "send": "\u001b[<c",
+   "cprs": 0,
+   "moves": false,
+   "risk": "safe"
+  },
+  "dsr-status": {
+   "send": "\u001b[5n",
+   "cprs": 0,
+   "moves": false,
+   "risk": "safe"
+  },
+  "size-999": {
+   "send": "\u001b[999;999H\u001b[6n",
+   "cprs": 1,
+   "moves": true,
+   "risk": "safe"
+  },
+  "size-255n": {
+   "send": "\u001b[255n",
+   "cprs": 1,
+   "moves": false,
+   "risk": "safe"
+  },
+  "size-18t": {
+   "send": "\u001b[18t",
+   "cprs": 0,
+   "moves": false,
+   "risk": "safe"
+  },
+  "decxcpr": {
+   "send": "\u001b[?6n",
+   "cprs": 1,
+   "moves": false,
+   "risk": "safe"
+  },
+  "cterm-font-state": {
+   "send": "\u001b[=1n",
+   "cprs": 0,
+   "moves": false,
+   "risk": "safe"
+  },
+  "cterm-mode": {
+   "send": "\u001b[=2n",
+   "cprs": 0,
+   "moves": false,
+   "risk": "safe"
+  },
+  "cterm-cell": {
+   "send": "\u001b[=3n",
+   "cprs": 0,
+   "moves": false,
+   "risk": "safe"
+  },
+  "cterm-6n": {
+   "send": "\u001b[=6n",
+   "cprs": 0,
+   "moves": false,
+   "risk": "safe"
+  },
+  "font-select": {
+   "send": "\u001b[0;0 D",
+   "cprs": 0,
+   "moves": false,
+   "risk": "safe"
+  },
+  "xtversion": {
+   "send": "\u001b[>0q",
+   "cprs": 0,
+   "moves": false,
+   "risk": "print"
+  },
+  "osc-fg": {
+   "send": "\u001b]10;?\u001b\\",
+   "cprs": 0,
+   "moves": false,
+   "risk": "print"
+  },
+  "apc-empty": {
+   "send": "\u001b_\u001b\\",
+   "cprs": 0,
+   "moves": false,
+   "risk": "print"
+  },
+  "enq": {
+   "send": "\u0005",
+   "cprs": 0,
+   "moves": false,
+   "risk": "print"
+  }
+ }
+}

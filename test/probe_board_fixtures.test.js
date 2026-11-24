@@ -84,3 +84,63 @@ describe('probe board reports from real DOS terminals', () => {
         }
     });
 });
+
+//
+//  Modern terminals, connected straight to the board on loopback (Windows 11).
+//
+describe('probe board reports from modern terminals', () => {
+    const NAMES = [ 'icyterm', 'netrunner', 'syncterm', 'terminator', 'telnet-exe' ];
+
+    test('every step ended on its own sentinel', () => {
+        for (const name of NAMES) {
+            const report = load(name);
+            assert.equal(report.probe.mode, 'sentinel', name);
+            for (const step of report.probe.steps.slice(1)) {
+                assert.equal(step.complete, true, `${name} ${step.id}`);
+            }
+        }
+    });
+
+    test('SyncTERM and TERMinator both identify as CTerm; only the version and caps differ', () => {
+        const sync = analyze(load('syncterm'));
+        const term = analyze(load('terminator'));
+        for (const s of [ sync, term ]) {
+            assert.equal(s.identity.ttype, 'syncterm');
+            assert.equal(s.identity.da1.client, 'cterm');
+            assert.equal(s.identity.da1.ctermClass, true);
+        }
+        assert.equal(sync.identity.da1.version, '1.333');
+        assert.equal(term.identity.da1.version, '1.332');
+        assert.deepEqual(term.identity.ctermCaps, [ 0, 1, 2, 3, 4, 6, 8 ]);
+        assert.deepEqual(sync.size.recommended, { cols : 80, rows : 24, source : 'naws' });
+        assert.deepEqual(probeOf(sync, 'cterm-6n').replies, [ 'ESC[=6;1n' ]);
+        assert.equal(probeOf(term, 'cterm-6n').answered, false);
+    });
+
+    test('IcyTerm: identified by DA alone (TTYPE is ANSI)', () => {
+        const s = analyze(load('icyterm'));
+        assert.equal(s.identity.ttype, 'ANSI');
+        assert.equal(s.identity.da1.client, 'icy_term');
+        assert.deepEqual(s.size.recommended, { cols : 80, rows : 25, source : 'naws' });
+        assert.equal(probeOf(s, 'cterm-6n').answered, false);
+    });
+
+    test('NetRunner: malformed NAWS, no DA, and CSI 5 n / CSI 255 n answered with the cursor position', () => {
+        const s = analyze(load('netrunner'));
+        assert.equal(s.telnet.naws.malformed, true);
+        assert.equal(s.identity.da1, null);
+        assert.deepEqual(probeOf(s, 'dsr-status').cprs, [ 'ESC[4;1R' ]);
+        assert.ok(s.size['size-255n'].flags.includes('did-not-move'));
+        assert.deepEqual(s.size.recommended, { cols : 80, rows : 25, source : 'size-999' });
+        assert.ok(s.notes.includes('NAWS was sent without WILL NAWS'));
+    });
+
+    test('Windows telnet.exe: NAWS keeps only the low byte of a 270-column width', () => {
+        const s = analyze(load('telnet-exe'));
+        assert.equal(s.telnet.naws.hex, '00 0e 00 48');
+        assert.equal(s.telnet.naws.truncated8, true);
+        assert.deepEqual(s.size.recommended, { cols : 270, rows : 72, source : 'size-999' });
+        assert.deepEqual(s.telnet.ttypes, [ 'ANSI', 'VT100', 'VT52', 'VTNT' ]);
+        assert.deepEqual(probeOf(s, 'dsr-status').replies, [ 'ESC[c' ]);
+    });
+});

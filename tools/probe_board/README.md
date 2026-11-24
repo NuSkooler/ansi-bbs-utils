@@ -26,7 +26,8 @@ A step ends when the sentinel's reply arrives, so every byte before it belongs t
 
 `analyze(report)` is pure, so old reports can be re-read when the rules change. It works out:
 - cursor report quirks: column;row order (Terminate) and row offsets (Telix);
-- sizes, with flags for a 999 that wrapped to 231 (Procomm), a column-79 clamp (Telemate), a move that was ignored (Qmodem), and malformed NAWS (NetRunner);
+- sizes, with flags for a 999 that wrapped to 231 (Procomm), a column-79 clamp (Telemate), a move that was ignored (Qmodem), malformed NAWS (NetRunner), and NAWS with the high byte of each dimension dropped (Windows telnet.exe: 270 columns sent as 14);
+- a DSR (`CSI 5 n`) answered with anything but `CSI 0 n`, and NAWS sent without `WILL NAWS`;
 - identity from DA, the CTerm capability list, XTVERSION and the answerback;
 - which probes were printed.
 
