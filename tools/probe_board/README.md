@@ -31,4 +31,6 @@ A step ends when the sentinel's reply arrives, so every byte before it belongs t
 - identity from DA, the CTerm capability list, XTVERSION and the answerback;
 - which probes were printed.
 
+`matrix.js` renders the fixtures as the tables in [docs/terminal-compatibility.md](../../docs/terminal-compatibility.md) (`npm run probe:matrix`).
+
 `tools/` is not part of the published package.

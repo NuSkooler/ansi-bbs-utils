@@ -31,6 +31,9 @@ All notable changes to this project are documented here.
     as text.
   - Reports recorded from six DOS terminal programs and five modern ones (SyncTERM,
     TERMinator, IcyTerm, NetRunner, Windows telnet.exe) are test fixtures.
+- **`docs/terminal-compatibility.md`:** what each recorded terminal answers to every probe,
+  and the detection rules that follow for a host. Its tables are generated from the fixtures
+  (`npm run probe:matrix`), and a test fails when they drift.
 
 ## 0.2.2 - 2026-10-26
 

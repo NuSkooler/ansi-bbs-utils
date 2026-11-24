@@ -144,3 +144,12 @@ describe('probe board reports from modern terminals', () => {
         assert.deepEqual(probeOf(s, 'dsr-status').replies, [ 'ESC[c' ]);
     });
 });
+
+describe('docs/terminal-compatibility.md', () => {
+    test('its generated tables match the fixtures (npm run probe:matrix)', () => {
+        const fs = require('fs');
+        const { render, replaceIn, DOC } = require('../tools/probe_board/matrix');
+        const doc = fs.readFileSync(DOC, 'utf8');
+        assert.equal(replaceIn(doc, render()), doc);
+    });
+});
