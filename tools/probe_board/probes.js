@@ -85,7 +85,7 @@ const Probes = [
     { id : 'apc-empty',     send : `${ESC}_${ESC}\\`,       cprs : 0, moves : false, risk : 'print',
         about : 'An empty APC string: shows whether APC is swallowed or printed' },
     { id : 'enq',           send : '\u0005',                cprs : 0, moves : false, risk : 'print',
-        about : 'ENQ answerback (PuTTY answers; Qodem draws a glyph)' },
+        about : 'ENQ answerback (PuTTY answers, per its docs)' },
 ];
 
 function frame(probe) {

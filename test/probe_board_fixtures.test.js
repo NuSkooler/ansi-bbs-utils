@@ -89,7 +89,7 @@ describe('probe board reports from real DOS terminals', () => {
 //  Modern terminals, connected straight to the board on loopback (Windows 11).
 //
 describe('probe board reports from modern terminals', () => {
-    const NAMES = [ 'icyterm', 'netrunner', 'syncterm', 'terminator', 'telnet-exe' ];
+    const NAMES = [ 'icyterm', 'netrunner', 'syncterm', 'terminator', 'telnet-exe', 'rgterm', 'qodem' ];
 
     test('every step ended on its own sentinel', () => {
         for (const name of NAMES) {
@@ -151,5 +151,30 @@ describe('docs/terminal-compatibility.md', () => {
         const { render, replaceIn, DOC } = require('../tools/probe_board/matrix');
         const doc = fs.readFileSync(DOC, 'utf8');
         assert.equal(replaceIn(doc, render()), doc);
+    });
+});
+
+describe('probe board reports: RGTerm and Qodem', () => {
+    test('RGTerm 1.14: CTerm DA, told apart by XTVERSION; CSI = 6 n answered with a CPR; no CSI 255 n', () => {
+        const s = analyze(load('rgterm'));
+        assert.equal(s.identity.ttype, 'ANSI-BBS');
+        assert.equal(s.identity.da1.client, 'cterm');
+        assert.equal(s.identity.xtversion, 'RGTERM 1.14');
+        assert.deepEqual(s.identity.ctermCaps, [ 0, 4, 5 ]);
+        assert.equal(s.identity.da3, null);
+        assert.ok(s.notes.includes('answers da2, da3 with its primary DA'));
+        assert.deepEqual(probeOf(s, 'cterm-6n').cprs, [ 'ESC[4;1R' ]);
+        assert.equal(probeOf(s, 'size-255n').answered, false);
+        assert.deepEqual(s.size['size-18t'], { rows : 25, cols : 80 });
+    });
+
+    test('Qodem 1.0.1: DA cut short to ESC[?, CSI 0 c printed, NEW-ENVIRON TERM=ansi', () => {
+        const s = analyze(load('qodem'));
+        assert.equal(s.identity.da1.vtClass, 'truncated');
+        assert.deepEqual(probeOf(s, 'da1').replies, [ 'ESC[?' ]);
+        assert.equal(probeOf(s, 'da1-0').printed, true);
+        assert.equal(s.telnet.environ['VAR:TERM'], 'ansi');
+        assert.deepEqual(s.size.recommended, { cols : 80, rows : 24, source : 'naws' });
+        assert.equal(probeOf(s, 'enq').printed, false);
     });
 });

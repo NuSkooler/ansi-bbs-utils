@@ -25,8 +25,10 @@ const END = '<!-- probe-matrix:end -->';
 const TERMINALS = [
     [ 'syncterm',   'SyncTERM' ],
     [ 'terminator', 'TERMinator 1.1.3' ],
+    [ 'rgterm',     'RGTerm 1.14' ],
     [ 'icyterm',    'IcyTerm 0.9.2' ],
     [ 'netrunner',  'NetRunner' ],
+    [ 'qodem',      'Qodem 1.0.1' ],
     [ 'telnet-exe', 'Windows telnet.exe' ],
     [ 'telix',      'Telix 3.51' ],
     [ 'pcplus',     'Procomm Plus TD' ],
@@ -94,6 +96,9 @@ function render(rows = loadAll()) {
             const d = s.identity.da1;
             if (!d) {
                 return 'nothing (no DA reply)';
+            }
+            if ('truncated' === d.vtClass) {
+                return `nothing (DA cut short: ${code(d.raw)})`;
             }
             return d.client ? `${d.client} ${d.version || ''}`.trim() : (d.vtClass || code(d.raw));
         }),

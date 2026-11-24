@@ -29,8 +29,8 @@ All notable changes to this project are documented here.
   - `analyze()` detects transposed or offset cursor reports, wrapped, clamped or ignored size
     moves, malformed or byte-truncated NAWS, the DA identity, and which probes were printed
     as text.
-  - Reports recorded from six DOS terminal programs and five modern ones (SyncTERM,
-    TERMinator, IcyTerm, NetRunner, Windows telnet.exe) are test fixtures.
+  - Reports recorded from six DOS terminal programs and seven modern ones (SyncTERM,
+    TERMinator, RGTerm, IcyTerm, NetRunner, Qodem, Windows telnet.exe) are test fixtures.
 - **`docs/terminal-compatibility.md`:** what each recorded terminal answers to every probe,
   and the detection rules that follow for a host. Its tables are generated from the fixtures
   (`npm run probe:matrix`), and a test fails when they drift.

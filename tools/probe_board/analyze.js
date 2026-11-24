@@ -43,7 +43,7 @@ function parseCprs(rx) {
 function otherReplies(rx) {
     const rest = rx.replace(CPR_SHAPED, '');
     const tokens = [];
-    const re = /\x1bP[\s\S]*?\x1b\\|\x1b\][\s\S]*?(?:\x07|\x1b\\)|\x1b_[\s\S]*?\x1b\\|\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]|\x1b[\s\S]?|[^\x1b]+/g;
+    const re = /\x1bP[\s\S]*?\x1b\\|\x1b\][\s\S]*?(?:\x07|\x1b\\)|\x1b_[\s\S]*?\x1b\\|\x1b\[[\x30-\x3f]*[\x20-\x2f]*[\x40-\x7e]|\x1b\[[\x30-\x3f]*[\x20-\x2f]*(?=\x1b|$)|\x1b[\s\S]?|[^\x1b]+/g;
     for (const m of rest.matchAll(re)) {
         tokens.push(m[0]);
     }
@@ -223,8 +223,22 @@ function analyze(report) {
             da1.ctermClass = true;      //  SyncTERM, TERMinator, RGTerm and BadTerm all send this
         }
     }
-    const da2m = firstMatch('da2', /^\x1b\[>([0-9;]*)c$/);
-    const da3m = firstMatch('da3', /^\x1b(?:P!\|([\s\S]*?)\x1b\\|\[=([0-9;]*)c)$/);
+    if (!da1) {
+        //  Qodem stops after ESC [ ? : no parameters, no final byte.
+        const cut = firstMatch('da1', /^\x1b\[\?$/) || firstMatch('da1-0', /^\x1b\[\?$/);
+        if (cut) {
+            da1 = { raw : show(cut[0]), prefix : '?', params : '', client : null, version : null, vtClass : 'truncated' };
+            notes.push('primary DA reply is cut short: ESC[? with no parameters or final byte');
+        }
+    }
+    //  Some terminals answer every DA form with their primary DA (Telix, RGTerm).
+    const echoes = da1 ? [ 'da2', 'da3', 'cterm-da' ].filter(id => probe[id] &&
+        probe[id]._parts.replies.some(t => show(t) === da1.raw)) : [];
+    if (echoes.length) {
+        notes.push(`answers ${echoes.join(', ')} with its primary DA`);
+    }
+    const da2m = echoes.includes('da2') ? null : firstMatch('da2', /^\x1b\[>([0-9;]*)c$/);
+    const da3m = echoes.includes('da3') ? null : firstMatch('da3', /^\x1b(?:P!\|([\s\S]*?)\x1b\\|\[=([0-9;]*)c)$/);
     const ctdaM = firstMatch('cterm-da', /^\x1b\[<([0-9;]*)c$/);
     const xtvM = firstMatch('xtversion', /^\x1bP>\|([\s\S]*?)\x1b\\$/);
     const enq = probe.enq ? probe.enq._parts.replies.filter(t => !t.startsWith(ESC)).join('') : '';
